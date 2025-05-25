@@ -118,13 +118,3 @@ Feel free to use, modify, and distribute the code and methodology for educationa
 
 ---
 
-## 🤝 Contributors
-
-- Bilal Ahmad  
-- Taha Nawaz  
-- Ali Ahmad  
-Department of Computer Science, FAST NUCES, Lahore  
-Fall 2023 – Data Science
-
----
-
