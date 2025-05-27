@@ -5,10 +5,10 @@ This is only the code file.
 
 import streamlit as st
 from streamlit_option_menu import option_menu
-from utilities import UserDatabase
+
 import pandas as pd
 import numpy as np
-!pip install matplotlib
+
 import matplotlib.pyplot as plt
 import seaborn as sns
 import ast
