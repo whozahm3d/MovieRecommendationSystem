@@ -3,8 +3,12 @@
 This is only the code file. 
 """
 
+import streamlit as st
+from streamlit_option_menu import option_menu
+from utilities import UserDatabase
 import pandas as pd
 import numpy as np
+pip install matplotlib
 import matplotlib.pyplot as plt
 import seaborn as sns
 import ast
@@ -29,9 +33,6 @@ from sklearn.ensemble import RandomForestRegressor
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.metrics import r2_score, mean_absolute_error, mean_squared_error
 from sklearn.model_selection import train_test_split, GridSearchCV
-
-import streamlit as st
-from streamlit_option_menu import option_menu
 
 df = pd.read_csv('tmdb_5000_movies.csv')
 df
