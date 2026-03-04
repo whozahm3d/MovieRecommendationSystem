@@ -1,4 +1,10 @@
 streamlit
-pandas
-matplotlib
 numpy
+pandas
+scikit-learn
+matplotlib
+seaborn
+scipy
+requests
+python-dotenv
+jupyterlab
