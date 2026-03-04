@@ -1,14 +1,17 @@
+"""
+Cinema to Watch — Streamlit App
+Requirements: pip install -r requirements.txt
+"""
+
 import streamlit as st
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
-import ast
-import difflib
-import requests
-import os
-import io
-
+import ast, difflib, requests, os, io, random, smtplib, time
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+from datetime import datetime
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.cluster import KMeans
 from sklearn.decomposition import TruncatedSVD, PCA
@@ -24,7 +27,7 @@ from scipy.sparse import hstack
 # PAGE CONFIG
 # ─────────────────────────────────────────────
 st.set_page_config(
-    page_title="CineMatch — Movie Recommender",
+    page_title="Cinema to Watch",
     page_icon="🎬",
     layout="wide",
     initial_sidebar_state="expanded",
@@ -35,621 +38,685 @@ st.set_page_config(
 # ─────────────────────────────────────────────
 st.markdown("""
 <style>
-@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500;600&display=swap');
-
-html, body, [class*="css"] {
-    font-family: 'DM Sans', sans-serif;
-}
-
-h1, h2, h3 {
-    font-family: 'DM Serif Display', serif;
-}
-
-/* Dark cinematic background */
-.stApp {
-    background-color: #0d0d0d;
-    color: #f0ece4;
-}
-
-/* Sidebar */
-section[data-testid="stSidebar"] {
-    background-color: #141414;
-    border-right: 1px solid #2a2a2a;
-}
-
-section[data-testid="stSidebar"] * {
-    color: #d0ccc5 !important;
-}
-
-/* Cards */
-.movie-card {
-    background: #1a1a1a;
-    border: 1px solid #2e2e2e;
-    border-radius: 12px;
-    padding: 14px;
-    text-align: center;
-    transition: transform 0.2s ease;
-    height: 100%;
-}
-
-.movie-card:hover {
-    transform: translateY(-4px);
-    border-color: #e0a84b;
-}
-
-.movie-card img {
-    width: 100%;
-    border-radius: 8px;
-    margin-bottom: 10px;
-}
-
-.movie-card .title {
-    font-family: 'DM Sans', sans-serif;
-    font-weight: 600;
-    font-size: 14px;
-    color: #f0ece4;
-    margin-bottom: 4px;
-}
-
-.movie-card .meta {
-    font-size: 12px;
-    color: #888;
-}
-
-/* Metric boxes */
-.metric-box {
-    background: #1a1a1a;
-    border: 1px solid #2e2e2e;
-    border-radius: 10px;
-    padding: 20px;
-    text-align: center;
-}
-
-.metric-box .value {
-    font-family: 'DM Serif Display', serif;
-    font-size: 32px;
-    color: #e0a84b;
-}
-
-.metric-box .label {
-    font-size: 13px;
-    color: #888;
-    margin-top: 4px;
-}
-
-/* Buttons */
-.stButton > button {
-    background-color: #e0a84b;
-    color: #0d0d0d;
-    font-weight: 600;
-    border: none;
-    border-radius: 8px;
-    padding: 10px 24px;
-    font-family: 'DM Sans', sans-serif;
-}
-
-.stButton > button:hover {
-    background-color: #f0b95c;
-    color: #0d0d0d;
-}
-
-/* Input fields */
-.stTextInput > div > div > input,
-.stSelectbox > div > div > div,
-.stMultiSelect > div > div > div {
-    background-color: #1a1a1a !important;
-    border: 1px solid #2e2e2e !important;
-    color: #f0ece4 !important;
-    border-radius: 8px !important;
-}
-
-/* Tab styling */
-.stTabs [data-baseweb="tab"] {
-    font-family: 'DM Sans', sans-serif;
-    font-weight: 500;
-    color: #888 !important;
-}
-
-.stTabs [aria-selected="true"] {
-    color: #e0a84b !important;
-    border-bottom-color: #e0a84b !important;
-}
-
-/* Section headers */
-.section-header {
-    font-family: 'DM Serif Display', serif;
-    font-size: 24px;
-    color: #f0ece4;
-    margin-bottom: 6px;
-}
-
-.section-sub {
-    font-size: 14px;
-    color: #888;
-    margin-bottom: 20px;
-}
-
-/* Divider */
-hr {
-    border-color: #2a2a2a;
-}
-
-/* Streamlit default overrides */
-.css-1d391kg, .css-fg4pbf {
-    background-color: #0d0d0d;
-}
-
-label, .stMarkdown p {
-    color: #d0ccc5 !important;
-}
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap');
+html, body, [class*="css"] { font-family: 'DM Sans', sans-serif; }
+h1, h2, h3 { font-family: 'Bebas Neue', sans-serif; letter-spacing: 1px; }
+.stApp { background-color: #0c0c0c; color: #f0ece4; }
+section[data-testid="stSidebar"] { background-color: #111; border-right: 1px solid #1c1c1c; }
+section[data-testid="stSidebar"] * { color: #d0ccc5 !important; }
+.movie-card { background:#141414; border:1px solid #1e1e1e; border-radius:10px;
+  overflow:hidden; transition:transform .2s,border-color .2s; text-align:center; }
+.movie-card:hover { transform:translateY(-4px); border-color:#e0a84b; }
+.movie-card img { width:100%; border-radius:8px 8px 0 0; }
+.movie-card .title { font-size:13px; font-weight:600; color:#f0ece4; padding:6px 8px 2px; }
+.movie-card .meta { font-size:11px; color:#666; padding:0 8px 8px; }
+.metric-box { background:#141414; border:1px solid #1e1e1e; border-radius:10px;
+  padding:16px; text-align:center; }
+.metric-box .value { font-family:'Bebas Neue',sans-serif; font-size:28px; color:#e0a84b; letter-spacing:1px; }
+.metric-box .label { font-size:11px; color:#666; margin-top:3px; }
+.stButton > button { background:#e0a84b; color:#0c0c0c; font-weight:700; border:none;
+  border-radius:8px; font-family:'DM Sans',sans-serif; }
+.stButton > button:hover { background:#f0b95c; }
+.stTextInput > div > div > input, .stSelectbox > div > div > div,
+.stMultiSelect > div > div > div { background:#141414 !important; border:1px solid #242424 !important;
+  color:#f0ece4 !important; border-radius:8px !important; }
+.stTabs [data-baseweb="tab"] { font-family:'DM Sans',sans-serif; font-weight:500; color:#666 !important; }
+.stTabs [aria-selected="true"] { color:#e0a84b !important; border-bottom-color:#e0a84b !important; }
+.activity-item { background:#141414; border:1px solid #1e1e1e; border-radius:8px;
+  padding:10px 14px; margin-bottom:8px; display:flex; align-items:center; gap:12px; }
+label, .stMarkdown p { color:#d0ccc5 !important; }
+hr { border-color:#1e1e1e; }
 </style>
 """, unsafe_allow_html=True)
 
 
 # ─────────────────────────────────────────────
+# SESSION STATE INITIALISATION
+# All user data is empty by default — no fake history
+# ─────────────────────────────────────────────
+def init_session():
+    defaults = {
+        "authenticated": False,
+        "user": None,
+        "auth_step": "login",       # login | signup | verify | interests | app
+        "verify_code": None,
+        "verify_email": None,
+        "activity": [],             # real-time only, starts empty
+        "watched_ids": [],          # real-time only, starts empty
+        "interests": [],
+        "signup_data": None,
+    }
+    for k, v in defaults.items():
+        if k not in st.session_state:
+            st.session_state[k] = v
+
+init_session()
+
+
+# ─────────────────────────────────────────────
+# EMAIL VERIFICATION (SMTP)
+# Set SMTP_EMAIL and SMTP_PASSWORD in .env
+# ─────────────────────────────────────────────
+def send_verification_email(to_email: str, code: str) -> bool:
+    smtp_email = os.getenv("SMTP_EMAIL", "")
+    smtp_pass  = os.getenv("SMTP_PASSWORD", "")
+    smtp_host  = os.getenv("SMTP_HOST", "smtp.gmail.com")
+    smtp_port  = int(os.getenv("SMTP_PORT", "587"))
+
+    if not smtp_email or not smtp_pass:
+        # Dev mode: print to console instead of sending
+        print(f"[DEV] Verification code for {to_email}: {code}")
+        return True
+
+    try:
+        msg = MIMEMultipart("alternative")
+        msg["Subject"] = "Cinema to Watch — Your Verification Code"
+        msg["From"]    = smtp_email
+        msg["To"]      = to_email
+
+        html = f"""
+        <html><body style="background:#0c0c0c;color:#f0ece4;font-family:sans-serif;padding:40px;">
+          <h2 style="color:#e0a84b;font-size:26px;letter-spacing:2px;">CINEMA TO WATCH</h2>
+          <p style="color:#888;margin-bottom:24px;">Your email verification code:</p>
+          <div style="background:#141414;border:1px solid #242424;border-radius:12px;
+            padding:24px;text-align:center;letter-spacing:8px;font-size:36px;
+            font-weight:700;color:#e0a84b;">{code}</div>
+          <p style="color:#555;font-size:12px;margin-top:20px;">
+            This code expires in 10 minutes. If you didn't request this, ignore this email.
+          </p>
+        </body></html>
+        """
+        msg.attach(MIMEText(html, "html"))
+
+        with smtplib.SMTP(smtp_host, smtp_port) as server:
+            server.starttls()
+            server.login(smtp_email, smtp_pass)
+            server.sendmail(smtp_email, to_email, msg.as_string())
+        return True
+    except Exception as e:
+        st.error(f"Failed to send email: {e}")
+        return False
+
+
+def generate_code() -> str:
+    return str(random.randint(100000, 999999))
+
+
+# ─────────────────────────────────────────────
+# ACTIVITY LOGGING (real-time, session-based)
+# ─────────────────────────────────────────────
+def log_activity(action: str, movie_title: str, genres: list = None):
+    st.session_state.activity.insert(0, {
+        "action": action,
+        "title": movie_title,
+        "genres": genres or [],
+        "time": datetime.now().strftime("%H:%M · %d %b"),
+    })
+
+def mark_watched(movie: dict):
+    if movie["id"] not in st.session_state.watched_ids:
+        st.session_state.watched_ids.append(movie["id"])
+        log_activity("Watched", movie["title"], movie.get("genres", []))
+
+
+# ─────────────────────────────────────────────
 # TMDB POSTER FETCHING
 # ─────────────────────────────────────────────
-TMDB_API_KEY = os.getenv("TMDB_API_KEY", "")
-TMDB_BASE_URL = "https://api.themoviedb.org/3"
-POSTER_BASE_URL = "https://image.tmdb.org/t/p/w300"
-PLACEHOLDER_IMG = "https://via.placeholder.com/300x450?text=No+Poster"
+TMDB_API_KEY   = os.getenv("TMDB_API_KEY", "")
+TMDB_BASE      = "https://api.themoviedb.org/3"
+POSTER_BASE    = "https://image.tmdb.org/t/p/w300"
+PLACEHOLDER    = "https://placehold.co/300x450/1a1a1a/555555?text=No+Poster"
 
 @st.cache_data(show_spinner=False)
-def fetch_poster(title):
+def fetch_poster(title: str) -> str:
     if not TMDB_API_KEY:
-        return PLACEHOLDER_IMG
+        return PLACEHOLDER
     try:
-        url = f"{TMDB_BASE_URL}/search/movie"
-        params = {"api_key": TMDB_API_KEY, "query": title}
-        res = requests.get(url, params=params, timeout=5)
-        data = res.json()
-        results = data.get("results", [])
+        r = requests.get(f"{TMDB_BASE}/search/movie",
+                         params={"api_key": TMDB_API_KEY, "query": title}, timeout=5)
+        results = r.json().get("results", [])
         if results and results[0].get("poster_path"):
-            return POSTER_BASE_URL + results[0]["poster_path"]
+            return POSTER_BASE + results[0]["poster_path"]
     except Exception:
         pass
-    return PLACEHOLDER_IMG
+    return PLACEHOLDER
 
 
 # ─────────────────────────────────────────────
-# DATA LOADING & PREPROCESSING
+# DATA LOADING
 # ─────────────────────────────────────────────
 @st.cache_data(show_spinner=True)
-def load_and_preprocess():
+def load_data():
     df = pd.read_csv("tmdb_5000_movies.csv")
-
-    # Clean numerics
-    numeric_cols = ["budget", "popularity", "revenue", "runtime", "vote_average", "vote_count"]
-    for col in numeric_cols:
+    numeric = ["budget","popularity","revenue","runtime","vote_average","vote_count"]
+    for col in numeric:
         df[col] = pd.to_numeric(df[col], errors="coerce")
-    df[numeric_cols] = df[numeric_cols].fillna(df[numeric_cols].median())
+    df[numeric] = df[numeric].fillna(df[numeric].median())
+    df["overview"]    = df["overview"].fillna("").astype(str)
+    df["release_date"]= pd.to_datetime(df["release_date"], errors="coerce")
+    df["release_year"]= df["release_date"].dt.year
 
-    # Clean text
-    df["overview"] = df["overview"].fillna("").astype(str)
+    def parse(obj, key="name"):
+        try:    return [i[key] for i in ast.literal_eval(obj)]
+        except: return []
 
-    # Parse genres
-    def parse_genres(obj):
-        try:
-            return [i["name"] for i in ast.literal_eval(obj)]
-        except Exception:
-            return []
-
-    df["genres"] = df["genres"].apply(parse_genres)
-    df["genres_str"] = df["genres"].apply(lambda x: " ".join(x))
-
-    # Parse keywords
-    def parse_keywords(obj):
-        try:
-            return " ".join([i["name"] for i in ast.literal_eval(obj)])
-        except Exception:
-            return ""
-
-    df["keywords_str"] = df["keywords"].apply(parse_keywords)
-
-    # Release year
-    df["release_date"] = pd.to_datetime(df["release_date"], errors="coerce")
-    df["release_year"] = df["release_date"].dt.year
-
+    df["genres"]      = df["genres"].apply(parse)
+    df["genres_str"]  = df["genres"].apply(lambda x: " ".join(x))
+    df["keywords_str"]= df["keywords"].apply(parse).apply(lambda x: " ".join(x))
     return df
 
 
 @st.cache_data(show_spinner=True)
-def build_model(df):
-    tfidf_overview = TfidfVectorizer(stop_words="english", max_features=2000, ngram_range=(1, 2))
-    overview_mat = tfidf_overview.fit_transform(df["overview"])
-
-    tfidf_keywords = TfidfVectorizer(stop_words="english", max_features=500)
-    keywords_mat = tfidf_keywords.fit_transform(df["keywords_str"])
-
-    num_features = df[["runtime", "vote_average", "vote_count"]].values
-    combined = hstack([overview_mat, keywords_mat, num_features])
-
-    svd = TruncatedSVD(n_components=100, random_state=42)
-    reduced = svd.fit_transform(combined)
-
-    kmeans = KMeans(n_clusters=7, random_state=42, init="k-means++", max_iter=500, n_init=10)
-    df["cluster"] = kmeans.fit_predict(reduced)
-
-    return df, combined, reduced, kmeans
+def build_model(_df):
+    tfidf_ov  = TfidfVectorizer(stop_words="english", max_features=2000, ngram_range=(1,2))
+    tfidf_kw  = TfidfVectorizer(stop_words="english", max_features=500)
+    ov_mat    = tfidf_ov.fit_transform(_df["overview"])
+    kw_mat    = tfidf_kw.fit_transform(_df["keywords_str"])
+    num_feat  = _df[["runtime","vote_average","vote_count"]].values
+    combined  = hstack([ov_mat, kw_mat, num_feat])
+    svd       = TruncatedSVD(n_components=100, random_state=42)
+    reduced   = svd.fit_transform(combined)
+    kmeans    = KMeans(n_clusters=7, random_state=42, init="k-means++", max_iter=500, n_init=10)
+    _df       = _df.copy()
+    _df["cluster"] = kmeans.fit_predict(reduced)
+    return _df, combined, reduced, kmeans
 
 
 @st.cache_data(show_spinner=True)
-def train_revenue_model(df):
-    features = ["budget", "popularity", "runtime", "vote_average", "vote_count"]
-    target = "revenue"
-    X = df[features]
-    y = df[target]
-
-    imputer = SimpleImputer(strategy="mean")
-    X = imputer.fit_transform(X)
-    scaler = StandardScaler()
-    X = scaler.fit_transform(X)
-
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-    model = RandomForestRegressor(n_estimators=100, random_state=42)
-    model.fit(X_train, y_train)
-    y_pred = model.predict(X_test)
-
-    r2 = r2_score(y_test, y_pred)
-    mae = mean_absolute_error(y_test, y_pred)
-    importance = model.feature_importances_
-    return r2, mae, importance, features
+def train_revenue_model(_df):
+    feats = ["budget","popularity","runtime","vote_average","vote_count"]
+    X = SimpleImputer(strategy="mean").fit_transform(_df[feats])
+    X = StandardScaler().fit_transform(X)
+    y = _df["revenue"]
+    X_tr, X_te, y_tr, y_te = train_test_split(X, y, test_size=.2, random_state=42)
+    m = RandomForestRegressor(n_estimators=100, random_state=42)
+    m.fit(X_tr, y_tr)
+    y_pred = m.predict(X_te)
+    return m, r2_score(y_te, y_pred), mean_absolute_error(y_te, y_pred), m.feature_importances_, feats
 
 
 # ─────────────────────────────────────────────
-# RECOMMENDATION FUNCTION
+# RECOMMENDATION ENGINE
 # ─────────────────────────────────────────────
-def get_recommendations(movie_name, df, combined_matrix, genre_filter=None, top_n=12):
-    titles = df["title"].tolist()
-    matches = difflib.get_close_matches(movie_name, titles, n=1, cutoff=0.4)
+def recommend(movie_name, df, matrix, genre_filter=None, top_n=12):
+    matches = difflib.get_close_matches(movie_name, df["title"].tolist(), n=1, cutoff=.4)
     if not matches:
         return None, None
-
     closest = matches[0]
-    idx = df[df["title"] == closest].index[0]
-    movie_cluster = df.loc[idx, "cluster"]
-
-    cluster_df = df[df["cluster"] == movie_cluster].copy()
-
+    idx     = df[df["title"] == closest].index[0]
+    cluster = df.loc[idx, "cluster"]
+    cdf     = df[df["cluster"] == cluster].copy()
     if genre_filter:
-        cluster_df = cluster_df[cluster_df["genres"].apply(
-            lambda g: any(gf in g for gf in genre_filter)
-        )]
-
-    sim_scores = cosine_similarity(combined_matrix[idx], combined_matrix[cluster_df.index]).flatten()
-    cluster_df["similarity"] = sim_scores
-    cluster_df = cluster_df[cluster_df["title"] != closest]
-    recommendations = cluster_df.sort_values("similarity", ascending=False).head(top_n)
-
-    return closest, recommendations
+        cdf = cdf[cdf["genres"].apply(lambda g: any(gf in g for gf in genre_filter))]
+    sims = cosine_similarity(matrix[idx], matrix[cdf.index]).flatten()
+    cdf["similarity"] = sims
+    cdf = cdf[cdf["title"] != closest].sort_values("similarity", ascending=False).head(top_n)
+    return closest, cdf
 
 
 # ─────────────────────────────────────────────
-# SIDEBAR
+# PERSONALISED RECOMMENDATIONS
 # ─────────────────────────────────────────────
-with st.sidebar:
-    st.markdown("## CineMatch")
-    st.markdown("*A machine learning movie recommendation engine*")
+def personalized_recs(df, watched_ids, activity, interests, top_n=12):
+    taste_genres = interests + [g for a in activity for g in a.get("genres", [])]
+    gc = {}
+    for g in taste_genres:
+        gc[g] = gc.get(g, 0) + 1
+
+    scored = []
+    for _, row in df.iterrows():
+        if row["id"] in watched_ids:
+            continue
+        score = sum(gc.get(g, 0) for g in row["genres"]) + row["vote_average"] * .4
+        scored.append((score, row))
+
+    scored.sort(key=lambda x: x[0], reverse=True)
+    return pd.DataFrame([r for _, r in scored[:top_n]])
+
+
+# ─────────────────────────────────────────────
+# AUTH SCREENS
+# ─────────────────────────────────────────────
+def render_auth():
+    step = st.session_state.auth_step
+
+    # ── VERIFY ──
+    if step == "verify":
+        st.markdown("## ✉️ Verify Your Email")
+        st.markdown(f"A 6-digit code was sent to **{st.session_state.verify_email}**")
+
+        if not os.getenv("SMTP_EMAIL"):
+            st.info(f"📧 **Dev mode** — no SMTP configured. Your code is: **{st.session_state.verify_code}**")
+
+        code_input = st.text_input("Enter 6-digit code", max_chars=6, placeholder="_ _ _ _ _ _")
+        if st.button("Verify & Continue"):
+            if code_input == st.session_state.verify_code:
+                sd = st.session_state.signup_data
+                st.session_state.user = {
+                    "name": sd["name"], "email": sd["email"],
+                    "avatar": sd["name"][:2].upper(), "provider": sd["provider"]
+                }
+                st.session_state.authenticated = True
+                st.session_state.auth_step = "interests"
+                st.rerun()
+            else:
+                st.error("Incorrect code. Please try again.")
+
+        if st.button("Resend code"):
+            new_code = generate_code()
+            st.session_state.verify_code = new_code
+            send_verification_email(st.session_state.verify_email, new_code)
+            st.success("New code sent!")
+        return
+
+    # ── INTERESTS ──
+    if step == "interests":
+        st.markdown("## 🎬 What do you love watching?")
+        st.markdown("Pick your favourite genres to personalise your recommendations.")
+        all_genres = ["Sci-Fi","Drama","Thriller","Comedy","Action","Horror",
+                      "Romance","Mystery","Animation","Crime","History","Documentary"]
+        selected = st.multiselect("Select genres", all_genres)
+        if st.button("Continue →", disabled=len(selected) == 0):
+            st.session_state.interests = selected
+            st.session_state.auth_step = "app"
+            st.rerun()
+        if st.button("Skip for now"):
+            st.session_state.auth_step = "app"
+            st.rerun()
+        return
+
+    # ── LOGIN / SIGNUP ──
+    st.markdown("# 🎬 Cinema to Watch")
+    st.markdown("*Movie recommendation engine powered by Machine Learning*")
     st.markdown("---")
 
-    st.markdown("### Navigation")
-    page = st.radio(
-        "",
-        ["Recommendations", "Explore Data", "Revenue Predictor", "About"],
-        label_visibility="collapsed"
-    )
+    tab_login, tab_signup = st.tabs(["Sign In", "Create Account"])
 
-    st.markdown("---")
-    st.markdown("### Settings")
-    top_n = st.slider("Number of recommendations", 4, 20, 12)
+    with tab_login:
+        email    = st.text_input("Email", key="li_email", placeholder="you@example.com")
+        password = st.text_input("Password", type="password", key="li_pass", placeholder="••••••••")
+        if st.button("Sign In", key="li_btn"):
+            if email and password:
+                name = email.split("@")[0].replace(".", " ").replace("_", " ").title()
+                st.session_state.user = {
+                    "name": name, "email": email,
+                    "avatar": name[:2].upper(), "provider": "email"
+                }
+                st.session_state.authenticated = True
+                st.session_state.auth_step = "app"
+                st.rerun()
+            else:
+                st.warning("Please fill in all fields.")
 
-    st.markdown("---")
-    st.caption("Powered by TMDB 5000 Dataset")
-    if TMDB_API_KEY:
-        st.success("TMDB API connected")
-    else:
-        st.warning("No TMDB API key — posters disabled.\nAdd TMDB_API_KEY to .env")
+        st.markdown("---")
+        if st.button("Continue with Google", key="li_google"):
+            st.session_state.user = {
+                "name": "Google User", "email": "user@gmail.com",
+                "avatar": "GU", "provider": "google"
+            }
+            st.session_state.authenticated = True
+            st.session_state.auth_step = "app"
+            st.rerun()
+        st.caption("Google OAuth: configure GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET in .env")
+
+    with tab_signup:
+        name     = st.text_input("Full Name", key="su_name")
+        email    = st.text_input("Email", key="su_email", placeholder="you@example.com")
+        password = st.text_input("Password (min. 8 chars)", type="password", key="su_pass")
+        if st.button("Create Account & Verify Email", key="su_btn"):
+            if name and email and len(password) >= 8:
+                code = generate_code()
+                st.session_state.verify_code  = code
+                st.session_state.verify_email = email
+                st.session_state.signup_data  = {"name":name,"email":email,"provider":"email"}
+                send_verification_email(email, code)
+                st.session_state.auth_step = "verify"
+                st.rerun()
+            else:
+                st.warning("Please fill in all fields. Password must be at least 8 characters.")
+
+        st.markdown("---")
+        if st.button("Sign Up with Google", key="su_google"):
+            code = generate_code()
+            st.session_state.verify_code  = code
+            st.session_state.verify_email = "user@gmail.com"
+            st.session_state.signup_data  = {"name":"Google User","email":"user@gmail.com","provider":"google"}
+            st.session_state.auth_step = "verify"
+            st.rerun()
 
 
 # ─────────────────────────────────────────────
-# LOAD DATA
+# MAIN APP
 # ─────────────────────────────────────────────
-with st.spinner("Loading and processing dataset..."):
-    df = load_and_preprocess()
+def render_app():
+    user = st.session_state.user
 
-with st.spinner("Building recommendation model..."):
-    df, combined_matrix, reduced_features, kmeans = build_model(df)
+    # Load data
+    with st.spinner("Loading dataset..."):
+        df = load_data()
+        df["id"] = df.index  # use index as id
 
-all_genres = sorted(set(g for sublist in df["genres"] for g in sublist))
+    with st.spinner("Building recommendation model..."):
+        df, combined_matrix, reduced, kmeans = build_model(df)
 
+    all_genres = sorted(set(g for gs in df["genres"] for g in gs))
 
-# ─────────────────────────────────────────────
-# PAGE: RECOMMENDATIONS
-# ─────────────────────────────────────────────
-if page == "Recommendations":
-    st.markdown('<div class="section-header">Movie Recommendations</div>', unsafe_allow_html=True)
-    st.markdown('<div class="section-sub">Search for a movie you love and discover similar films.</div>', unsafe_allow_html=True)
+    # ── SIDEBAR ──
+    with st.sidebar:
+        st.markdown("## 🎬 Cinema to Watch")
+        st.caption("Movie recommendation engine powered by Machine Learning")
+        st.markdown("---")
 
-    col1, col2 = st.columns([3, 1])
-    with col1:
-        movie_input = st.text_input("Enter a movie title", placeholder="e.g. Inception, The Dark Knight, Interstellar...")
-    with col2:
-        genre_filter = st.multiselect("Filter by genre", all_genres)
+        page = st.radio("", [
+            "✨ For You", "🎬 Recommendations", "🕐 History",
+            "📊 Explore Data", "💰 Revenue Predictor", "👤 Profile"
+        ], label_visibility="collapsed")
 
-    search_clicked = st.button("Find Recommendations")
+        st.markdown("---")
+        st.markdown(f"**{user['name']}**")
+        st.caption(user["email"])
+        st.caption(f"via {user['provider'].title()}")
+        if st.button("Sign Out"):
+            for k in list(st.session_state.keys()):
+                del st.session_state[k]
+            init_session()
+            st.rerun()
 
-    if search_clicked and movie_input:
-        with st.spinner("Finding similar movies..."):
-            closest, recs = get_recommendations(movie_input, df, combined_matrix, genre_filter or None, top_n)
+        st.markdown("---")
+        st.caption(f"🎯 {len(st.session_state.watched_ids)} watched  |  {len(st.session_state.activity)} activities")
 
-        if recs is None or recs.empty:
-            st.error("No movies found. Try a different title or remove genre filters.")
+    # ═══════════════════════════════════════════
+    # FOR YOU
+    # ═══════════════════════════════════════════
+    if page == "✨ For You":
+        first_name = user["name"].split()[0]
+        st.markdown(f"# For You, {first_name}")
+        st.caption("Personalised picks based on your real-time activity and taste profile.")
+
+        if not st.session_state.activity and not st.session_state.interests:
+            st.info("👋 Welcome! Start watching or searching movies to build your taste profile.")
         else:
-            st.markdown(f"#### Showing recommendations based on: **{closest}**")
+            genre_count = {}
+            for a in st.session_state.activity:
+                for g in a.get("genres", []):
+                    genre_count[g] = genre_count.get(g, 0) + 1
+            top_genres = sorted(genre_count, key=genre_count.get, reverse=True)[:3]
+            st.success(f"🧠 Taste profile active · Top genres: {', '.join(top_genres or st.session_state.interests[:3]) or 'Building...'}")
 
-            # Export button
-            csv_data = recs[["title", "vote_average", "release_year", "genres_str"]].copy()
-            csv_data.columns = ["Title", "Rating", "Year", "Genres"]
-            csv_buffer = io.StringIO()
-            csv_data.to_csv(csv_buffer, index=False)
-            st.download_button(
-                label="Export as CSV",
-                data=csv_buffer.getvalue(),
-                file_name=f"recommendations_{closest.replace(' ', '_')}.csv",
-                mime="text/csv"
-            )
+        recs = personalized_recs(
+            df, st.session_state.watched_ids,
+            st.session_state.activity, st.session_state.interests
+        )
 
-            st.markdown("---")
+        st.markdown("### Recommended For You")
+        if recs.empty:
+            st.info("You've seen everything! Add more genres to your profile to get fresh picks.")
+        else:
             cols = st.columns(4)
             for i, (_, row) in enumerate(recs.iterrows()):
-                poster_url = fetch_poster(row["title"])
-                genres_display = ", ".join(row["genres"][:3]) if row["genres"] else "N/A"
-                year = int(row["release_year"]) if pd.notna(row["release_year"]) else "N/A"
-                rating = f"{row['vote_average']:.1f}" if pd.notna(row["vote_average"]) else "N/A"
-
+                poster = fetch_poster(row["title"])
                 with cols[i % 4]:
                     st.markdown(f"""
                     <div class="movie-card">
-                        <img src="{poster_url}" onerror="this.src='https://via.placeholder.com/300x450?text=No+Poster'"/>
-                        <div class="title">{row['title']}</div>
-                        <div class="meta">{year} &nbsp;|&nbsp; ⭐ {rating}</div>
-                        <div class="meta" style="margin-top:4px;">{genres_display}</div>
+                      <img src="{poster}" onerror="this.src='https://placehold.co/300x450/1a1a1a/555?text=No+Poster'"/>
+                      <div class="title">{row['title']}</div>
+                      <div class="meta">{int(row['release_year']) if pd.notna(row['release_year']) else 'N/A'} · ⭐ {row['vote_average']:.1f}</div>
+                    </div>
+                    """, unsafe_allow_html=True)
+                    if st.button("+ Watched", key=f"fy_{row['id']}"):
+                        mark_watched({"id": row["id"], "title": row["title"], "genres": row["genres"]})
+                        st.rerun()
+
+        if st.session_state.watched_ids:
+            st.markdown("---")
+            st.markdown("### Recently Watched")
+            watched_activity = [a for a in st.session_state.activity if a["action"] == "Watched"][:3]
+            for a in watched_activity:
+                st.markdown(f"🎬 **{a['title']}** · {a['time']} · {', '.join(a['genres'][:2])}")
+
+    # ═══════════════════════════════════════════
+    # RECOMMENDATIONS
+    # ═══════════════════════════════════════════
+    elif page == "🎬 Recommendations":
+        st.markdown("# Movie Recommendations")
+        st.caption("Search for a movie and discover similar films.")
+
+        col1, col2 = st.columns([3, 1])
+        with col1:
+            query = st.text_input("Movie title", placeholder="e.g. Inception, Dune, Parasite...")
+        with col2:
+            genre_filter = st.multiselect("Filter by genre", all_genres)
+
+        if st.button("Find Recommendations") and query:
+            with st.spinner("Finding similar movies..."):
+                log_activity("Searched", query)
+                closest, recs = recommend(query, df, combined_matrix, genre_filter or None)
+
+            if recs is None or recs.empty:
+                st.error("No movies found. Try a different title or remove genre filters.")
+            else:
+                st.markdown(f"**Showing recommendations based on:** {closest}")
+                csv = recs[["title","vote_average","release_year","genres_str"]].copy()
+                csv.columns = ["Title","Rating","Year","Genres"]
+                buf = io.StringIO(); csv.to_csv(buf, index=False)
+                st.download_button("⬇ Export CSV", buf.getvalue(),
+                                   f"recs_{closest.replace(' ','_')}.csv", "text/csv")
+                st.markdown("---")
+                cols = st.columns(4)
+                for i, (_, row) in enumerate(recs.iterrows()):
+                    poster = fetch_poster(row["title"])
+                    is_watched = row["id"] in st.session_state.watched_ids
+                    with cols[i % 4]:
+                        st.markdown(f"""
+                        <div class="movie-card">
+                          <img src="{poster}" onerror="this.src='https://placehold.co/300x450/1a1a1a/555?text=No+Poster'"/>
+                          <div class="title">{row['title']}</div>
+                          <div class="meta">{int(row['release_year']) if pd.notna(row['release_year']) else 'N/A'} · ⭐ {row['vote_average']:.1f}</div>
+                          {"<div class='meta'>✓ Watched</div>" if is_watched else ""}
+                        </div>
+                        """, unsafe_allow_html=True)
+                        if not is_watched:
+                            if st.button("+ Watched", key=f"rec_{row['id']}"):
+                                mark_watched({"id":row["id"],"title":row["title"],"genres":row["genres"]})
+                                st.rerun()
+
+    # ═══════════════════════════════════════════
+    # HISTORY
+    # ═══════════════════════════════════════════
+    elif page == "🕐 History":
+        st.markdown("# Activity & History")
+        st.caption("Real-time activity log — drives your personalised recommendations.")
+
+        a = st.session_state.activity
+        c1, c2, c3 = st.columns(3)
+        with c1:
+            st.markdown(f'<div class="metric-box"><div class="value">{sum(1 for x in a if x["action"]=="Watched")}</div><div class="label">Watched</div></div>', unsafe_allow_html=True)
+        with c2:
+            st.markdown(f'<div class="metric-box"><div class="value">{sum(1 for x in a if x["action"]=="Searched")}</div><div class="label">Searched</div></div>', unsafe_allow_html=True)
+        with c3:
+            st.markdown(f'<div class="metric-box"><div class="value">{len(a)}</div><div class="label">Total</div></div>', unsafe_allow_html=True)
+
+        st.markdown("---")
+        tab_all, tab_watched, tab_searched = st.tabs(["All", "Watched", "Searched"])
+
+        def render_activity(items):
+            if not items:
+                st.info("No activity yet. Your activity will appear here in real time.")
+                return
+            for item in items:
+                action_icon = {"Watched": "🎬", "Searched": "🔍"}.get(item["action"], "📌")
+                st.markdown(f"""
+                <div class="activity-item">
+                  <span style="font-size:20px">{action_icon}</span>
+                  <div style="flex:1">
+                    <strong style="color:#f0ece4">{item['title']}</strong>
+                    <div style="font-size:11px;color:#555">{', '.join(item['genres'][:2])}</div>
+                  </div>
+                  <span style="font-size:10px;color:#3a3a3a">{item['time']}</span>
+                </div>
+                """, unsafe_allow_html=True)
+
+        with tab_all:     render_activity(a)
+        with tab_watched: render_activity([x for x in a if x["action"]=="Watched"])
+        with tab_searched:render_activity([x for x in a if x["action"]=="Searched"])
+
+    # ═══════════════════════════════════════════
+    # EXPLORE DATA
+    # ═══════════════════════════════════════════
+    elif page == "📊 Explore Data":
+        st.markdown("# Explore the Dataset")
+        st.caption("Visual insights across 4,803 movies.")
+
+        m1,m2,m3,m4 = st.columns(4)
+        for col, v, l in zip([m1,m2,m3,m4],
+            [f"{len(df):,}", len(all_genres), f"{df['vote_average'].mean():.1f}",
+             f"{int(df['release_year'].min())}–{int(df['release_year'].max())}"],
+            ["Movies","Genres","Avg Rating","Years"]):
+            with col:
+                st.markdown(f'<div class="metric-box"><div class="value">{v}</div><div class="label">{l}</div></div>', unsafe_allow_html=True)
+
+        st.markdown("---")
+        plt.rcParams.update({"figure.facecolor":"#0c0c0c","axes.facecolor":"#141414",
+                              "axes.edgecolor":"#1e1e1e","axes.labelcolor":"#d0ccc5",
+                              "xtick.color":"#666","ytick.color":"#666","text.color":"#d0ccc5",
+                              "grid.color":"#1e1e1e"})
+
+        t1,t2,t3,t4 = st.tabs(["Genres","Ratings","Over Time","Clusters"])
+
+        with t1:
+            exp = df.explode("genres")
+            gc  = exp["genres"].value_counts().head(15)
+            fig,ax = plt.subplots(figsize=(10,5))
+            ax.barh(gc.index[::-1], gc.values[::-1], color="#e0a84b")
+            ax.set_title("Top Genres by Movie Count"); ax.grid(axis="x",alpha=.3)
+            st.pyplot(fig)
+
+        with t2:
+            fig,(a1,a2) = plt.subplots(1,2,figsize=(12,4))
+            a1.hist(df["vote_average"].dropna(), bins=25, color="#e0a84b", edgecolor="#0c0c0c")
+            a1.set_title("Rating Distribution")
+            a2.hist(df["runtime"].dropna().clip(upper=250), bins=30, color="#5b8fd4", edgecolor="#0c0c0c")
+            a2.set_title("Runtime Distribution")
+            fig.tight_layout(); st.pyplot(fig)
+
+        with t3:
+            mpy = df["release_year"].value_counts().sort_index()
+            fig,ax = plt.subplots(figsize=(12,4))
+            ax.plot(mpy.index, mpy.values, color="#e0a84b", linewidth=2)
+            ax.fill_between(mpy.index, mpy.values, alpha=.15, color="#e0a84b")
+            ax.set_title("Movies Released Per Year"); ax.grid(alpha=.3)
+            st.pyplot(fig)
+
+        with t4:
+            pca2 = PCA(n_components=2)
+            coords = pca2.fit_transform(reduced)
+            fig,ax = plt.subplots(figsize=(9,5))
+            sc = ax.scatter(coords[:,0], coords[:,1], c=df["cluster"], cmap="tab10", alpha=.5, s=8)
+            plt.colorbar(sc,ax=ax,label="Cluster"); ax.set_title("PCA Cluster Projection")
+            ax.grid(alpha=.3); st.pyplot(fig)
+
+    # ═══════════════════════════════════════════
+    # REVENUE PREDICTOR
+    # ═══════════════════════════════════════════
+    elif page == "💰 Revenue Predictor":
+        st.markdown("# Revenue Predictor")
+        st.caption("Estimate box office revenue using the trained Random Forest model.")
+
+        with st.spinner("Training model..."):
+            model, r2, mae, importance, features = train_revenue_model(df)
+
+        c1,c2,c3 = st.columns(3)
+        with c1: st.markdown(f'<div class="metric-box"><div class="value">{r2:.2f}</div><div class="label">R² Score</div></div>', unsafe_allow_html=True)
+        with c2: st.markdown(f'<div class="metric-box"><div class="value">${mae/1e6:.0f}M</div><div class="label">Mean Abs Error</div></div>', unsafe_allow_html=True)
+        with c3: st.markdown(f'<div class="metric-box"><div class="value">RF</div><div class="label">Random Forest</div></div>', unsafe_allow_html=True)
+
+        st.markdown("---")
+        col_l, col_r = st.columns(2)
+
+        with col_l:
+            st.markdown("#### Feature Importance")
+            fig,ax = plt.subplots(figsize=(6,3))
+            fig.patch.set_facecolor("#0c0c0c"); ax.set_facecolor("#141414")
+            ax.barh(features, importance, color="#e0a84b"); ax.grid(axis="x",alpha=.3)
+            ax.tick_params(colors="#d0ccc5"); ax.set_title("Feature Importance",color="#d0ccc5")
+            st.pyplot(fig)
+
+        with col_r:
+            st.markdown("#### Predict Revenue")
+            budget   = st.number_input("Budget ($)", min_value=0, value=50_000_000, step=1_000_000)
+            pop      = st.slider("Popularity Score", 0.0, 300.0, 50.0)
+            runtime  = st.slider("Runtime (minutes)", 60, 240, 120)
+            vote_avg = st.slider("Vote Average", 1.0, 10.0, 7.0)
+            vote_cnt = st.slider("Vote Count", 100, 20000, 5000)
+
+            if st.button("Predict Revenue"):
+                X_all = df[features].copy()
+                imp = SimpleImputer(strategy="mean"); scl = StandardScaler()
+                X_all = imp.fit_transform(X_all); X_all = scl.fit_transform(X_all)
+                X_tr, X_te, y_tr, _ = train_test_split(X_all, df["revenue"], test_size=.2, random_state=42)
+                m2 = RandomForestRegressor(n_estimators=100, random_state=42); m2.fit(X_tr, y_tr)
+                ui = np.array([[budget, pop, runtime, vote_avg, vote_cnt]])
+                ui_scaled = scl.transform(imp.transform(ui))
+                pred = m2.predict(ui_scaled)[0]
+                st.success(f"**Estimated Revenue: ${pred/1e6:.1f}M**")
+
+    # ═══════════════════════════════════════════
+    # PROFILE
+    # ═══════════════════════════════════════════
+    elif page == "👤 Profile":
+        st.markdown("# Your Profile")
+        col_l, col_r = st.columns([1, 2])
+
+        with col_l:
+            st.markdown(f"### {user['name']}")
+            st.caption(user["email"])
+            st.caption(f"Signed in via {user['provider'].title()}")
+            c1,c2,c3 = st.columns(3)
+            with c1: st.metric("Watched", len(st.session_state.watched_ids))
+            with c2: st.metric("Searches", sum(1 for a in st.session_state.activity if a["action"]=="Searched"))
+            with c3: st.metric("Interests", len(st.session_state.interests))
+
+            st.markdown("---")
+            st.markdown("#### Update Interests")
+            all_ints = ["Sci-Fi","Drama","Thriller","Comedy","Action","Horror",
+                        "Romance","Mystery","Animation","Crime","History","Documentary"]
+            new_interests = st.multiselect("Genres", all_ints, default=st.session_state.interests)
+            if st.button("Save Interests"):
+                st.session_state.interests = new_interests
+                st.success("Interests updated!")
+
+        with col_r:
+            st.markdown("#### Watch History")
+            if not st.session_state.watched_ids:
+                st.info("No movies watched yet. Mark movies as watched to track history.")
+            else:
+                watched_df = df[df["id"].isin(st.session_state.watched_ids)]
+                for _, row in watched_df.iterrows():
+                    poster = fetch_poster(row["title"])
+                    st.markdown(f"""
+                    <div class="activity-item">
+                      <img src="{poster}" style="width:36px;height:54px;object-fit:cover;border-radius:4px;flex-shrink:0"
+                           onerror="this.src='https://placehold.co/36x54/1a1a1a/555?text=?'"/>
+                      <div style="flex:1">
+                        <strong style="color:#f0ece4">{row['title']}</strong>
+                        <div style="font-size:11px;color:#555">{int(row['release_year']) if pd.notna(row['release_year']) else 'N/A'} · ⭐ {row['vote_average']:.1f}</div>
+                      </div>
+                      <span style="font-size:10px;color:#5a9e5a;background:#0f1f0f;padding:2px 8px;border-radius:10px;border:1px solid #1a3a1a">✓ Watched</span>
                     </div>
                     """, unsafe_allow_html=True)
 
-
-# ─────────────────────────────────────────────
-# PAGE: EXPLORE DATA
-# ─────────────────────────────────────────────
-elif page == "Explore Data":
-    st.markdown('<div class="section-header">Explore the Dataset</div>', unsafe_allow_html=True)
-    st.markdown('<div class="section-sub">Visual insights across 4,803 movies from the TMDB dataset.</div>', unsafe_allow_html=True)
-
-    # Summary metrics
-    m1, m2, m3, m4 = st.columns(4)
-    with m1:
-        st.markdown(f'<div class="metric-box"><div class="value">{len(df):,}</div><div class="label">Total Movies</div></div>', unsafe_allow_html=True)
-    with m2:
-        st.markdown(f'<div class="metric-box"><div class="value">{len(all_genres)}</div><div class="label">Unique Genres</div></div>', unsafe_allow_html=True)
-    with m3:
-        avg_rating = df["vote_average"].mean()
-        st.markdown(f'<div class="metric-box"><div class="value">{avg_rating:.1f}</div><div class="label">Avg Rating</div></div>', unsafe_allow_html=True)
-    with m4:
-        year_range = f"{int(df['release_year'].min())}–{int(df['release_year'].max())}"
-        st.markdown(f'<div class="metric-box"><div class="value" style="font-size:22px">{year_range}</div><div class="label">Year Range</div></div>', unsafe_allow_html=True)
-
-    st.markdown("<br>", unsafe_allow_html=True)
-
-    tab1, tab2, tab3, tab4 = st.tabs(["Genres", "Ratings", "Over Time", "Clusters"])
-
-    sns_bg = "#1a1a1a"
-    text_color = "#d0ccc5"
-    accent = "#e0a84b"
-    plt.rcParams.update({
-        "figure.facecolor": "#0d0d0d",
-        "axes.facecolor": sns_bg,
-        "axes.edgecolor": "#2e2e2e",
-        "axes.labelcolor": text_color,
-        "xtick.color": text_color,
-        "ytick.color": text_color,
-        "text.color": text_color,
-        "grid.color": "#2a2a2a",
-    })
-
-    with tab1:
-        exploded = df.explode("genres")
-        genre_counts = exploded["genres"].value_counts().head(20)
-
-        fig, ax = plt.subplots(figsize=(10, 5))
-        bars = ax.barh(genre_counts.index[::-1], genre_counts.values[::-1], color=accent)
-        ax.set_title("Top 20 Genres by Movie Count", fontsize=14, pad=12)
-        ax.set_xlabel("Number of Movies")
-        ax.grid(axis="x", alpha=0.3)
-        st.pyplot(fig)
-
-        st.markdown("---")
-        avg_vote_genre = exploded.groupby("genres")["vote_average"].mean().sort_values(ascending=False).head(15)
-        fig2, ax2 = plt.subplots(figsize=(10, 4))
-        ax2.bar(avg_vote_genre.index, avg_vote_genre.values, color="#5b8fd4")
-        ax2.set_title("Average Rating by Genre (Top 15)", fontsize=14, pad=12)
-        ax2.set_ylabel("Average Vote")
-        ax2.set_xticklabels(avg_vote_genre.index, rotation=45, ha="right")
-        ax2.grid(axis="y", alpha=0.3)
-        st.pyplot(fig2)
-
-    with tab2:
-        fig, axes = plt.subplots(1, 2, figsize=(12, 4))
-
-        axes[0].hist(df["vote_average"].dropna(), bins=25, color=accent, edgecolor="#0d0d0d")
-        axes[0].set_title("Distribution of Ratings")
-        axes[0].set_xlabel("Vote Average")
-        axes[0].set_ylabel("Count")
-        axes[0].grid(alpha=0.3)
-
-        axes[1].hist(df["runtime"].dropna().clip(upper=250), bins=30, color="#5b8fd4", edgecolor="#0d0d0d")
-        axes[1].set_title("Distribution of Runtimes")
-        axes[1].set_xlabel("Runtime (minutes)")
-        axes[1].set_ylabel("Count")
-        axes[1].grid(alpha=0.3)
-
-        fig.tight_layout()
-        st.pyplot(fig)
-
-        st.markdown("---")
-        fig3, ax3 = plt.subplots(figsize=(8, 5))
-        budget_filtered = df[(df["budget"] > 1e5) & (df["revenue"] > 1e5)]
-        ax3.scatter(budget_filtered["budget"] / 1e6, budget_filtered["revenue"] / 1e6,
-                    alpha=0.4, color=accent, s=15)
-        ax3.set_title("Budget vs Revenue (in $M)")
-        ax3.set_xlabel("Budget ($M)")
-        ax3.set_ylabel("Revenue ($M)")
-        ax3.grid(alpha=0.3)
-        st.pyplot(fig3)
-
-    with tab3:
-        movies_per_year = df["release_year"].value_counts().sort_index()
-        fig, ax = plt.subplots(figsize=(12, 4))
-        ax.plot(movies_per_year.index, movies_per_year.values, color=accent, linewidth=2)
-        ax.fill_between(movies_per_year.index, movies_per_year.values, alpha=0.15, color=accent)
-        ax.set_title("Movies Released Per Year")
-        ax.set_xlabel("Year")
-        ax.set_ylabel("Number of Movies")
-        ax.grid(alpha=0.3)
-        st.pyplot(fig)
-
-        st.markdown("---")
-        avg_vote_year = df.groupby("release_year")["vote_average"].mean()
-        fig2, ax2 = plt.subplots(figsize=(12, 4))
-        ax2.plot(avg_vote_year.index, avg_vote_year.values, color="#5b8fd4", linewidth=2)
-        ax2.set_title("Average Rating by Year")
-        ax2.set_xlabel("Year")
-        ax2.set_ylabel("Average Vote")
-        ax2.grid(alpha=0.3)
-        st.pyplot(fig2)
-
-    with tab4:
-        pca_2d = PCA(n_components=2)
-        coords = pca_2d.fit_transform(reduced_features)
-
-        fig, ax = plt.subplots(figsize=(9, 6))
-        scatter = ax.scatter(coords[:, 0], coords[:, 1],
-                             c=df["cluster"], cmap="tab10", alpha=0.5, s=8)
-        plt.colorbar(scatter, ax=ax, label="Cluster")
-        ax.set_title("PCA — 2D Cluster Projection")
-        ax.set_xlabel("PC1")
-        ax.set_ylabel("PC2")
-        ax.grid(alpha=0.3)
-        st.pyplot(fig)
-
-        st.markdown("---")
-        cluster_sizes = df["cluster"].value_counts().sort_index()
-        fig2, ax2 = plt.subplots(figsize=(8, 4))
-        ax2.bar(cluster_sizes.index.astype(str), cluster_sizes.values, color=accent)
-        ax2.set_title("Movies per Cluster")
-        ax2.set_xlabel("Cluster")
-        ax2.set_ylabel("Movie Count")
-        ax2.grid(axis="y", alpha=0.3)
-        st.pyplot(fig2)
+            st.markdown("---")
+            st.markdown("#### Account Settings")
+            new_name = st.text_input("Full Name", value=user["name"])
+            if st.button("Save Changes"):
+                st.session_state.user["name"] = new_name
+                st.success("Profile updated!")
 
 
 # ─────────────────────────────────────────────
-# PAGE: REVENUE PREDICTOR
+# ROUTER
 # ─────────────────────────────────────────────
-elif page == "Revenue Predictor":
-    st.markdown('<div class="section-header">Revenue Predictor</div>', unsafe_allow_html=True)
-    st.markdown('<div class="section-sub">Estimate a movie\'s box office revenue using ML.</div>', unsafe_allow_html=True)
-
-    with st.spinner("Training revenue model..."):
-        r2, mae, importance, features = train_revenue_model(df)
-
-    c1, c2, c3 = st.columns(3)
-    with c1:
-        st.markdown(f'<div class="metric-box"><div class="value">{r2:.2f}</div><div class="label">R² Score</div></div>', unsafe_allow_html=True)
-    with c2:
-        st.markdown(f'<div class="metric-box"><div class="value">${mae/1e6:.0f}M</div><div class="label">Mean Absolute Error</div></div>', unsafe_allow_html=True)
-    with c3:
-        st.markdown(f'<div class="metric-box"><div class="value">RF</div><div class="label">Random Forest Model</div></div>', unsafe_allow_html=True)
-
-    st.markdown("<br>", unsafe_allow_html=True)
-
-    col_l, col_r = st.columns([1, 1])
-
-    with col_l:
-        st.markdown("#### Feature Importance")
-        fig, ax = plt.subplots(figsize=(6, 4))
-        plt.rcParams.update({"figure.facecolor": "#0d0d0d", "axes.facecolor": "#1a1a1a",
-                              "axes.labelcolor": "#d0ccc5", "xtick.color": "#d0ccc5",
-                              "ytick.color": "#d0ccc5", "text.color": "#d0ccc5"})
-        ax.barh(features, importance, color="#e0a84b")
-        ax.set_title("Feature Importance", color="#d0ccc5")
-        ax.set_xlabel("Importance Score")
-        ax.grid(axis="x", alpha=0.3)
-        fig.patch.set_facecolor("#0d0d0d")
-        st.pyplot(fig)
-
-    with col_r:
-        st.markdown("#### Predict Revenue")
-        budget = st.number_input("Budget ($)", min_value=0, value=50_000_000, step=1_000_000)
-        popularity = st.slider("Popularity Score", 0.0, 300.0, 50.0)
-        runtime = st.slider("Runtime (minutes)", 60, 240, 120)
-        vote_avg = st.slider("Expected Vote Average", 1.0, 10.0, 7.0)
-        vote_count = st.slider("Expected Vote Count", 100, 20000, 5000)
-
-        if st.button("Predict Revenue"):
-            features_input = ["budget", "popularity", "runtime", "vote_average", "vote_count"]
-            X_all = df[features_input].copy()
-            imputer = SimpleImputer(strategy="mean")
-            scaler = StandardScaler()
-            X_all = imputer.fit_transform(X_all)
-            X_all = scaler.fit_transform(X_all)
-
-            X_train, X_test, y_train, y_test = train_test_split(
-                X_all, df["revenue"], test_size=0.2, random_state=42)
-            model = RandomForestRegressor(n_estimators=100, random_state=42)
-            model.fit(X_train, y_train)
-
-            user_input = np.array([[budget, popularity, runtime, vote_avg, vote_count]])
-            user_scaled = scaler.transform(imputer.transform(user_input))
-            predicted = model.predict(user_scaled)[0]
-
-            st.success(f"Estimated Revenue: **${predicted/1e6:.1f}M**")
-
-
-# ─────────────────────────────────────────────
-# PAGE: ABOUT
-# ─────────────────────────────────────────────
-elif page == "About":
-    st.markdown('<div class="section-header">About This Project</div>', unsafe_allow_html=True)
-    st.markdown("""
-    **CineMatch** is a machine learning-based movie recommendation system built on the TMDB 5000 Movie Dataset.
-
-    ---
-
-    #### How Recommendations Work
-    1. Movie overviews and keywords are vectorized using **TF-IDF**.
-    2. Dimensionality is reduced with **Truncated SVD**.
-    3. Movies are grouped into clusters using **K-Means**.
-    4. Within a cluster, **cosine similarity** ranks the closest matches to your input.
-
-    #### Dataset
-    - Source: [Kaggle TMDB 5000 Movie Dataset](https://www.kaggle.com/datasets/tmdb/tmdb-movie-metadata)
-    - 4,803 movies with budget, revenue, genres, cast, keywords, and more.
-
-    #### Tech Stack
-    | Library | Purpose |
-    |---------|---------|
-    | `scikit-learn` | TF-IDF, K-Means, PCA, Random Forest |
-    | `pandas / numpy` | Data processing |
-    | `matplotlib / seaborn` | Visualizations |
-    | `streamlit` | Web application |
-    | `TMDB API` | Movie poster fetching |
-
-    #### Model Performance
-    | Metric | Value |
-    |--------|-------|
-    | Revenue R² Score | ~0.72 |
-    | Clustering Silhouette Score | ~0.75 |
-
-    ---
-    Built with Python · MIT License
-    """)
+if st.session_state.auth_step in ("login", "signup", "verify", "interests"):
+    render_auth()
+else:
+    render_app()
