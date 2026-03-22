@@ -17,8 +17,7 @@ import plotly.graph_objects as go
 import requests
 from dotenv import load_dotenv
 from movie_recommendation import (
-    build_official_recommender,
-    describe_official_pipeline,
+    build_recommender,
     load_movie_data,
     personalized_recommendations,
     recommend_by_title,
@@ -178,7 +177,7 @@ def load_data():
 
 @st.cache_resource(show_spinner=False)
 def build_model(df):
-    return build_official_recommender(df)
+    return build_recommender(df)
 
 
 @st.cache_resource(show_spinner=False)

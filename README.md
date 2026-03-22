@@ -5,8 +5,8 @@ A movie discovery project that combines exploratory data analysis, content-based
 ## What this repo includes
 
 - **Streamlit app** for browsing recommendations, dataset insights, and revenue prediction.
-- **Reusable Python package** with data loading, the official recommendation pipeline, and revenue-model utilities.
-- **CLI script** for quick dataset summaries, pipeline introspection, recommendations, and revenue estimates.
+- **Reusable Python package** with data loading, recommendation, and revenue-model utilities.
+- **CLI script** for quick dataset summaries, recommendations, and revenue estimates.
 - **Notebook and report artifacts** from the original project work.
 
 ## Project Structure
@@ -14,7 +14,7 @@ A movie discovery project that combines exploratory data analysis, content-based
 ```text
 MovieRecommendationSystem/
 ├── app.py                    # Streamlit application entry point
-├── project.py                # CLI utilities for summaries, recommendations, pipeline details, and revenue prediction
+├── project.py                # CLI utilities for summaries, recommendations, and revenue prediction
 ├── movie_recommendation/     # Reusable project modules
 │   ├── __init__.py
 │   ├── analysis.py
@@ -29,7 +29,7 @@ MovieRecommendationSystem/
 ## Features
 
 - **Dataset normalization** with optional enrichment from `tmdb_5000_credits.csv` when available.
-- **Official recommendation pipeline** using TF-IDF, Truncated SVD, K-Means cluster narrowing, and cosine similarity ranking.
+- **Content-based recommendations** using TF-IDF, Truncated SVD, clustering, and cosine similarity.
 - **Personalized suggestions** from watched history and selected interests.
 - **Revenue prediction** using a Random Forest regressor trained on key movie metadata.
 - **Interactive analytics** in Streamlit with genre, rating, runtime, and PCA cluster views.
@@ -49,19 +49,6 @@ Place the TMDB dataset files in the project root.
 
 The app and CLI can run without the credits file, but recommendations will be better when it is present.
 
-## Official recommendation pipeline
-
-This repository uses **one official recommendation pipeline** everywhere in the app and CLI:
-
-1. Load and normalize movie metadata.
-2. Build text features from overview, genres, and keywords.
-3. Vectorize text with TF-IDF using 5,000 max features.
-4. Reduce the vectors with Truncated SVD to 100 components.
-5. Assign movies to 7 K-Means clusters.
-6. Rank same-cluster candidates with cosine similarity.
-
-That means `app.py` and `project.py recommend ...` now use the same scoring path instead of multiple competing recommender implementations.
-
 ## Running the app
 
 ```bash
@@ -69,12 +56,6 @@ streamlit run app.py
 ```
 
 ## Running the CLI
-
-Print the official recommendation pipeline:
-
-```bash
-python project.py pipeline
-```
 
 Print dataset summary:
 
@@ -94,7 +75,18 @@ Predict revenue from feature inputs:
 python project.py revenue --budget 160 --popularity 90 --runtime 148 --vote-average 8.3 --vote-count 22000
 ```
 
-## Revenue model
+## Methodology
+
+### Recommendation pipeline
+
+1. Load and normalize movie metadata.
+2. Build text features from overview, genres, and keywords.
+3. Vectorize text with TF-IDF.
+4. Reduce dimensionality with Truncated SVD.
+5. Cluster movies with K-Means.
+6. Rank cluster neighbors with cosine similarity.
+
+### Revenue model
 
 1. Select numerical features: budget, popularity, runtime, vote average, and vote count.
 2. Standardize inputs.
