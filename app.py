@@ -4,7 +4,7 @@
 # ║  Deps: pip install -r requirements.txt                       ║
 # ╚══════════════════════════════════════════════════════════════╝
 
-import os, re, ast, json, time, smtplib, random, string, difflib
+import os, re, json, time, smtplib, random, string
 from datetime import datetime, timedelta
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
@@ -15,15 +15,15 @@ import streamlit as st
 import plotly.express as px
 import plotly.graph_objects as go
 import requests
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.decomposition import TruncatedSVD
-from sklearn.cluster import KMeans
-from sklearn.metrics.pairwise import cosine_similarity
-from sklearn.ensemble import RandomForestRegressor
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler
-from sklearn.metrics import mean_absolute_error, r2_score
 from dotenv import load_dotenv
+from movie_recommendation import (
+    build_official_recommender,
+    describe_official_pipeline,
+    load_movie_data,
+    personalized_recommendations,
+    recommend_by_title,
+    train_revenue_model,
+)
 
 load_dotenv()
 
@@ -171,88 +171,19 @@ def send_verification_email(to_email: str, code: str) -> bool:
 @st.cache_data(show_spinner=False)
 def load_data():
     try:
-        movies = pd.read_csv("tmdb_5000_movies.csv")
-        credits = pd.read_csv("tmdb_5000_credits.csv")
-        credits = credits.rename(columns={"movie_id": "id"})
-        df = movies.merge(credits, on="id", how="left")
-        df = df.dropna(subset=["overview"])
-        df["genres_list"] = df["genres"].apply(
-            lambda x: [g["name"] for g in ast.literal_eval(x)] if pd.notna(x) else []
-        )
-        df["keywords_list"] = df["keywords"].apply(
-            lambda x: [k["name"] for k in ast.literal_eval(x)] if pd.notna(x) else []
-        )
-        df["release_year"] = pd.to_datetime(df["release_date"], errors="coerce").dt.year
-        df["runtime"] = df["runtime"].fillna(df["runtime"].median())
-        df["vote_average"] = df["vote_average"].fillna(df["vote_average"].median())
-        df["vote_count"] = df["vote_count"].fillna(0)
-        df["popularity"] = df["popularity"].fillna(df["popularity"].median())
-        df["budget"] = df["budget"].replace(0, np.nan).fillna(df["budget"].median())
-        df["revenue"] = df["revenue"].replace(0, np.nan)
-        df["text_features"] = df["overview"].fillna("") + " " + df["genres_list"].apply(lambda x: " ".join(x)) + " " + df["keywords_list"].apply(lambda x: " ".join(x[:10]))
-        return df
+        return load_movie_data()
     except FileNotFoundError:
         return None
 
+
 @st.cache_resource(show_spinner=False)
 def build_model(df):
-    tfidf = TfidfVectorizer(max_features=5000, stop_words="english")
-    tfidf_matrix = tfidf.fit_transform(df["text_features"])
-    svd = TruncatedSVD(n_components=100, random_state=42)
-    reduced = svd.fit_transform(tfidf_matrix)
-    km = KMeans(n_clusters=7, random_state=42, n_init=10)
-    df = df.copy()
-    df["cluster"] = km.fit_predict(reduced)
-    sim_matrix = cosine_similarity(reduced)
-    return df, tfidf, svd, km, sim_matrix
+    return build_official_recommender(df)
+
 
 @st.cache_resource(show_spinner=False)
-def train_revenue_model(df):
-    rev_df = df.dropna(subset=["revenue"]).copy()
-    features = ["budget", "popularity", "runtime", "vote_average", "vote_count"]
-    rev_df = rev_df.dropna(subset=features)
-    X = rev_df[features]
-    y = rev_df["revenue"]
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-    scaler = StandardScaler()
-    X_train_s = scaler.fit_transform(X_train)
-    X_test_s  = scaler.transform(X_test)
-    rf = RandomForestRegressor(n_estimators=100, random_state=42, n_jobs=-1)
-    rf.fit(X_train_s, y_train)
-    preds = rf.predict(X_test_s)
-    r2  = r2_score(y_test, preds)
-    mae = mean_absolute_error(y_test, preds)
-    return rf, scaler, features, r2, mae, rev_df[features + ["revenue"]]
-
-def recommend(df, sim_matrix, title: str, genre_filter: list = None, n: int = 10):
-    matches = difflib.get_close_matches(title.lower(), df["title_x"].str.lower().tolist(), n=1, cutoff=0.4)
-    if not matches:
-        return pd.DataFrame()
-    idx = df[df["title_x"].str.lower() == matches[0]].index[0]
-    movie = df.loc[idx]
-    cluster = movie["cluster"]
-    cluster_df = df[df["cluster"] == cluster].copy()
-    cluster_df = cluster_df[cluster_df.index != idx]
-    if genre_filter:
-        cluster_df = cluster_df[cluster_df["genres_list"].apply(lambda g: any(x in g for x in genre_filter))]
-    sims = sim_matrix[idx, cluster_df.index]
-    cluster_df = cluster_df.copy()
-    cluster_df["similarity"] = sims
-    return cluster_df.sort_values("similarity", ascending=False).head(n)
-
-def personalized_recs(df, activity, interests, watched_ids, n=10):
-    genre_counts = {}
-    for item in activity:
-        for g in item.get("genres", []):
-            genre_counts[g] = genre_counts.get(g, 0) + 1
-    for g in interests:
-        genre_counts[g] = genre_counts.get(g, 0) + 2
-    unwatched = df[~df["id"].isin(watched_ids)].copy()
-    def score(row):
-        s = sum(genre_counts.get(g, 0) for g in row["genres_list"])
-        return s + row["vote_average"] * 0.4
-    unwatched["pers_score"] = unwatched.apply(score, axis=1)
-    return unwatched.sort_values("pers_score", ascending=False).head(n)
+def build_revenue_model(df):
+    return train_revenue_model(df)
 
 def fetch_poster(title: str) -> str:
     if title in WIKI_POSTERS:
@@ -437,8 +368,22 @@ def render_sidebar():
           <div style="font-size:10px;color:#3a3a3a;overflow:hidden;text-overflow:ellipsis">{user.get('email','')}</div>
         </div>""", unsafe_allow_html=True)
         if st.button("Sign Out", use_container_width=True, key="signout"):
-            for k in ["authenticated","user","auth_step","activity","watched_ids","interests","verify_code","verify_email","verify_attempts","signup_data"]:
-                st.session_state[k] = [] if k in ["activity","watched_ids","interests"] else (False if k=="authenticated" else ("login" if k=="auth_step" else {}))
+            for key in [
+                "authenticated",
+                "user",
+                "auth_step",
+                "verify_code",
+                "verify_email",
+                "verify_attempts",
+                "verify_locked_until",
+                "signup_data",
+                "activity",
+                "watched_ids",
+                "interests",
+                "page",
+            ]:
+                st.session_state.pop(key, None)
+            init_state()
             st.rerun()
 
 
@@ -528,7 +473,7 @@ def page_for_you(df):
         _show_wiki_grid()
         return
 
-    recs = personalized_recs(df, activity, interests, watched)
+    recs = personalized_recommendations(df, activity, interests, watched)
     if recs.empty:
         st.markdown('<div class="empty">No recommendations yet. Watch or search something first!</div>', unsafe_allow_html=True)
         return
@@ -537,11 +482,11 @@ def page_for_you(df):
     cols = st.columns(5)
     for i, (_, row) in enumerate(recs.iterrows()):
         with cols[i % 5]:
-            poster = fetch_poster(row.get("title_x", ""))
+            poster = fetch_poster(row.get("title", ""))
             st.image(poster, use_container_width=True)
-            st.caption(f"**{row.get('title_x','')}**  \n⭐ {row.get('vote_average',0):.1f}")
+            st.caption(f"**{row.get('title','')}**  \n⭐ {row.get('vote_average',0):.1f}")
             if st.button("+ Watched", key=f"fy_w_{i}"):
-                mark_watched(int(row["id"]), row.get("title_x",""), row.get("genres_list",[]))
+                mark_watched(int(row["id"]), row.get("title",""), row.get("genres_list",[]))
                 st.rerun()
 
     # Recently watched
@@ -571,7 +516,7 @@ def _show_wiki_grid():
 # ══════════════════════════════════════════════════════════════
 def page_recommendations(df, model_data):
     st.markdown('<div class="page-title">🔍 Recommendations</div>', unsafe_allow_html=True)
-    st.markdown('<div class="page-sub">Search a movie and get ML-powered similar recommendations.</div>', unsafe_allow_html=True)
+    st.markdown('<div class="page-sub">Search a movie using the official TF-IDF → SVD → K-Means → cosine similarity pipeline.</div>', unsafe_allow_html=True)
 
     col_q, col_btn = st.columns([5, 1])
     with col_q:
@@ -580,6 +525,7 @@ def page_recommendations(df, model_data):
         search = st.button("Search", use_container_width=True)
 
     genre_filter = st.multiselect("Filter by genre", ALL_GENRES, key="rec_genre_filter")
+    st.caption(describe_official_pipeline())
 
     if df is None:
         st.warning("Dataset required for recommendations. Add CSV files and restart.")
@@ -587,26 +533,28 @@ def page_recommendations(df, model_data):
 
     if search and query:
         log_activity("Searched", query)
-        df_model, _, _, _, sim_matrix = model_data
-        results = recommend(df_model, sim_matrix, query, genre_filter if genre_filter else None)
+        if model_data is None:
+            st.error("Recommendation model is unavailable right now. Please reload the app.")
+            return
+        results = recommend_by_title(model_data, query, genre_filter if genre_filter else None)
 
         if results.empty:
             st.error(f"No results found for '{query}'. Try a different title.")
         else:
             st.success(f"Found {len(results)} recommendations for **{query}**")
             # CSV export
-            export = results[["title_x","vote_average","release_year","genres_list"]].copy()
+            export = results[["title","vote_average","release_year","genres_list"]].copy()
             export.columns = ["Title","Rating","Year","Genres"]
             st.download_button("⬇️ Export CSV", export.to_csv(index=False), "recommendations.csv", "text/csv")
 
             cols = st.columns(5)
             for i, (_, row) in enumerate(results.iterrows()):
                 with cols[i % 5]:
-                    poster = fetch_poster(row.get("title_x",""))
+                    poster = fetch_poster(row.get("title",""))
                     st.image(poster, use_container_width=True)
-                    st.caption(f"**{row.get('title_x','')}**  \n⭐ {row.get('vote_average',0):.1f} · {int(row.get('release_year',0)) if pd.notna(row.get('release_year')) else ''}")
+                    st.caption(f"**{row.get('title','')}**  \n⭐ {row.get('vote_average',0):.1f} · {int(row.get('release_year',0)) if pd.notna(row.get('release_year')) else ''}")
                     if st.button("+ Watched", key=f"rec_w_{i}"):
-                        mark_watched(int(row["id"]), row.get("title_x",""), row.get("genres_list",[]))
+                        mark_watched(int(row["id"]), row.get("title",""), row.get("genres_list",[]))
                         st.rerun()
     else:
         st.markdown('<div class="section-hdr">Browse All — Top Picks</div>', unsafe_allow_html=True)
@@ -704,13 +652,15 @@ def page_explore(df):
         from sklearn.decomposition import PCA
         st.caption("PCA 2D projection of movie feature vectors (coloured by cluster)")
         try:
-            df_model, _, svd, _, _ = build_model(df)
-            tfidf = TfidfVectorizer(max_features=5000, stop_words="english")
-            tmat  = tfidf.fit_transform(df_model["text_features"])
-            red   = svd.transform(tmat) if hasattr(svd, "components_") else TruncatedSVD(100, random_state=42).fit_transform(tmat)
-            pca   = PCA(n_components=2, random_state=42)
+            model_data = build_model(df)
+            df_model = model_data.movies
+            tfidf = model_data.tfidf
+            svd = model_data.svd
+            tmat = tfidf.transform(df_model["text_features"])
+            red = svd.transform(tmat)
+            pca = PCA(n_components=2, random_state=42)
             coords = pca.fit_transform(red[:2000])
-            pca_df = pd.DataFrame({"x":coords[:,0],"y":coords[:,1],"cluster":df_model["cluster"].values[:2000].astype(str),"title":df_model["title_x"].values[:2000]})
+            pca_df = pd.DataFrame({"x":coords[:,0],"y":coords[:,1],"cluster":df_model["cluster"].values[:2000].astype(str),"title":df_model["title"].values[:2000]})
             fig = px.scatter(pca_df, x="x", y="y", color="cluster", hover_name="title",
                              template="plotly_dark", color_discrete_sequence=px.colors.qualitative.Bold)
             fig.update_layout(paper_bgcolor="#141414", plot_bgcolor="#141414")
@@ -730,7 +680,12 @@ def page_revenue(df):
         st.warning("Dataset required.")
         return
 
-    rf, scaler, features, r2, mae, _ = train_revenue_model(df)
+    revenue_artifacts = build_revenue_model(df)
+    rf = revenue_artifacts.model
+    scaler = revenue_artifacts.scaler
+    features = revenue_artifacts.features
+    r2 = revenue_artifacts.r2
+    mae = revenue_artifacts.mae
 
     c1, c2, c3 = st.columns(3)
     for col, val, lbl in zip([c1,c2,c3],
@@ -760,7 +715,7 @@ def page_revenue(df):
         vote_cnt  = st.slider("Vote count (thousands)", 1, 200, 50) * 1000
 
         if st.button("🎯 Predict Revenue", use_container_width=True):
-            inp = np.array([[budget_m * 1e6, pop, runtime_m, vote_avg, vote_cnt]])
+            inp = pd.DataFrame([[budget_m * 1e6, pop, runtime_m, vote_avg, vote_cnt]], columns=features)
             inp_s = scaler.transform(inp)
             pred = rf.predict(inp_s)[0]
             roi  = (pred - budget_m * 1e6) / (budget_m * 1e6) * 100
