@@ -250,7 +250,7 @@ body.light .mobile-bar { background: rgba(244,239,231,0.9); }
 .section-header h3, .section-title-sm {
   margin: 0; font-size: 13px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted);
 }
-.hero-banner, .panel, .metric-card, .movie-card, .detail-panel, .chart-card, .info-box, .contact-card, .tour-card {
+.hero-banner, .panel, .metric-card, .movie-card, .detail-panel, .chart-card, .info-box, .contact-card, .tour-card, .cluster-card, .detail-modal-card {
   background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));
   border: 1px solid var(--border); border-radius: 18px; box-shadow: var(--shadow);
 }
@@ -262,7 +262,9 @@ body.light .detail-panel,
 body.light .chart-card,
 body.light .info-box,
 body.light .contact-card,
-body.light .tour-card { background: linear-gradient(180deg, rgba(255,255,255,0.96), rgba(247,242,234,0.96)); }
+body.light .tour-card,
+body.light .cluster-card,
+body.light .detail-modal-card { background: linear-gradient(180deg, rgba(255,255,255,0.96), rgba(247,242,234,0.96)); }
 .hero-banner {
   padding: 28px 30px; margin-bottom: 22px;
   background: linear-gradient(120deg, rgba(92,42,48,.92) 0%, rgba(34,41,56,.92) 46%, rgba(12,15,22,.98) 100%);
@@ -288,12 +290,13 @@ body.light .hero-banner { background: linear-gradient(120deg, rgba(219,199,177,.
 body.light .poster-frame { background: linear-gradient(180deg, #e7dccf 0%, #f7f1e8 100%); border-color: rgba(124,90,52,0.12); }
 .poster-frame img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .movie-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 14px; }
-.movie-grid.compact { grid-template-columns: repeat(8, minmax(0, 1fr)); }
-.movie-card { padding: 12px; }
+.movie-grid.compact { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
+.movie-card { padding: 12px; height: 100%; display: flex; flex-direction: column; }
 .movie-title { font-weight: 700; margin: 10px 0 4px; }
-.movie-meta { color: var(--muted); font-size: 12px; min-height: 34px; }
-.movie-actions { display: flex; gap: 8px; margin-top: 10px; }
-.movie-actions button { flex: 1; }
+.movie-meta { color: var(--muted); font-size: 12px; min-height: 54px; }
+.movie-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-top: auto; padding-top: 12px; }
+.movie-actions button { width: 100%; }
+.movie-grid.compact .movie-actions { grid-template-columns: 1fr; }
 .search-row, .toolbar-row { display: flex; gap: 10px; align-items: center; }
 .search-input, textarea {
   width: 100%; padding: 13px 14px; border-radius: 12px; border: 1.5px solid var(--border);
@@ -337,6 +340,33 @@ input[type="range"] { width: 100%; accent-color: var(--gold2); }
 .tour-card { padding: 16px; margin-bottom: 18px; }
 .tour-step { display: none; }
 .tour-step.active { display: block; }
+.detail-modal {
+  position: fixed; inset: 0; z-index: 120; display: none; align-items: center; justify-content: center;
+  padding: 22px; background: rgba(0,0,0,0.64); backdrop-filter: blur(8px);
+}
+.detail-modal.visible { display: flex; }
+.tour-overlay {
+  position: fixed; inset: 0; z-index: 130; display: none; pointer-events: none;
+  background: rgba(0,0,0,0.35);
+}
+.tour-overlay.visible { display: block; }
+.tour-popover {
+  position: fixed; right: 24px; bottom: 24px; width: min(360px, calc(100vw - 32px));
+  padding: 18px; border-radius: 18px; border: 1px solid var(--border); background: var(--bg2); box-shadow: var(--shadow);
+  pointer-events: auto;
+}
+.tour-popover h4 { margin: 0 0 8px; font-size: 18px; }
+.tour-popover p { margin: 0 0 14px; color: var(--muted); line-height: 1.65; }
+.tour-highlight { position: relative; z-index: 131 !important; outline: 3px solid var(--gold2); outline-offset: 6px; border-radius: 14px; }
+.tour-launch { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 12px; }
+.detail-modal-card {
+  width: min(980px, 100%); max-height: min(86vh, 980px); overflow-y: auto;
+  padding: 22px; border: 1px solid var(--border); border-radius: 22px;
+  display: grid; grid-template-columns: 220px 1fr; gap: 20px;
+}
+.cluster-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.cluster-card { padding: 16px; border: 1px solid var(--border); border-radius: 16px; }
+.cluster-card strong { display: block; margin-bottom: 8px; color: var(--gold2); }
 .skeleton-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 14px; }
 .skeleton-card {
   height: 280px; border-radius: 18px; position: relative; overflow: hidden;
@@ -365,7 +395,7 @@ input[type="range"] { width: 100%; accent-color: var(--gold2); }
   .sidebar.open { transform: translateX(0); }
   .main { margin-left: 0; padding: 22px 18px 34px; }
   .layout { display: block; }
-  .detail-panel, .two-col, .profile-grid, .contact-grid { grid-template-columns: 1fr; }
+  .detail-panel, .two-col, .profile-grid, .contact-grid, .cluster-grid { grid-template-columns: 1fr; }
   .movie-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .movie-grid.compact { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .metric-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -385,6 +415,9 @@ input[type="range"] { width: 100%; accent-color: var(--gold2); }
   .hero-title { font-size: 42px; }
   .movie-grid, .movie-grid.compact, .metric-grid, .genre-grid, .otp-row, .skeleton-grid { grid-template-columns: 1fr; }
   .detail-panel { padding: 16px; }
+  .detail-modal { padding: 14px; }
+  .detail-modal-card { padding: 16px; grid-template-columns: 1fr; }
+  .tour-popover { right: 12px; left: 12px; width: auto; bottom: 12px; }
 }
 
 @keyframes shimmer { 100% { transform: translateX(100%); } }
@@ -528,15 +561,15 @@ input[type="range"] { width: 100%; accent-color: var(--gold2); }
       </div>
       <div class="nav-group">
         <button class="nav-btn active" data-page="home">Home</button>
-        <button class="nav-btn" data-page="foryou">For You</button>
-        <button class="nav-btn" data-page="recommendations">Recommendations</button>
+        <button class="nav-btn" data-page="foryou" id="tour-nav-foryou">For You</button>
+        <button class="nav-btn" data-page="recommendations" id="tour-nav-recommendations">Recommendations</button>
         <button class="nav-btn" data-page="history">History</button>
-        <button class="nav-btn" data-page="explore">Explore Data</button>
+        <button class="nav-btn" data-page="explore" id="tour-nav-explore">Explore Data</button>
         <button class="nav-btn" data-page="revenue">Revenue Predictor</button>
-        <button class="nav-btn" data-page="profile">Profile</button>
+        <button class="nav-btn" data-page="profile" id="tour-nav-profile">Profile</button>
         <button class="nav-btn" data-page="contact">Contact</button>
       </div>
-      <div class="sidebar-footer">
+      <div class="sidebar-footer" id="tour-sidebar-footer">
         <div class="user-name" id="sidebar-name">Portfolio Guest</div>
         <div class="user-email" id="sidebar-email">demo@portfolio.local</div>
         <div class="sidebar-actions">
@@ -552,31 +585,17 @@ input[type="range"] { width: 100%; accent-color: var(--gold2); }
         <p class="page-sub">A polished portfolio walkthrough with persisted state, mobile navigation, and a real bundled movie snapshot.</p>
 
         <div class="tour-card" id="tour-card">
-          <div class="tour-step active" data-tour-step="0">
-            <strong>Quick tour — 1 of 4</strong>
-            <p class="muted">Search for a movie, mark one as watched, then refresh the page to see that your state persists.</p>
-          </div>
-          <div class="tour-step" data-tour-step="1">
-            <strong>Quick tour — 2 of 4</strong>
-            <p class="muted">Open the Recommendations page to try actual TF‑IDF + cosine similarity with the bundled TMDB snapshot.</p>
-          </div>
-          <div class="tour-step" data-tour-step="2">
-            <strong>Quick tour — 3 of 4</strong>
-            <p class="muted">Resize to mobile width to see the collapsible sidebar and responsive grids.</p>
-          </div>
-          <div class="tour-step" data-tour-step="3">
-            <strong>Quick tour — 4 of 4</strong>
-            <p class="muted">Switch themes or edit your interests in Profile to show user preference support.</p>
-          </div>
-          <div class="movie-actions">
-            <button class="ghost-btn" id="tour-next-btn" type="button">Next tip</button>
-            <button class="ghost-btn" id="tour-dismiss-btn" type="button">Dismiss</button>
+          <strong>Guided app tour</strong>
+          <p class="muted" style="margin:8px 0 0; line-height:1.7;">Take a guided walkthrough of the dashboard to see where recommendations, saved history, dataset insights, profile controls, and app settings live.</p>
+          <div class="tour-launch">
+            <button class="ghost-btn" id="tour-start-btn" type="button">Start app tour</button>
+            <button class="ghost-btn" id="tour-dismiss-btn" type="button">Hide intro</button>
           </div>
         </div>
 
         <div class="detail-panel" id="detail-panel"></div>
 
-        <div class="hero-banner">
+        <div class="hero-banner" id="tour-home-hero">
           <div class="hero-chip" id="hero-chip">Popular now</div>
           <div class="hero-title" id="hero-title">INTERSTELLAR</div>
           <div class="hero-tagline" id="hero-tagline">Reach beyond the stars.</div>
@@ -613,7 +632,7 @@ input[type="range"] { width: 100%; accent-color: var(--gold2); }
           <div class="hero-chip">Esc clears details</div>
           <div class="hero-chip">300ms debounce</div>
         </div>
-        <div class="search-row" style="margin-bottom:12px;">
+        <div class="search-row" style="margin-bottom:12px;" id="tour-search-row">
           <input class="search-input" id="rec-query" type="text" placeholder="Search a title or describe a movie mood…">
           <button class="ghost-btn" id="clear-search-btn" type="button">Clear</button>
           <button class="btn-primary" id="search-btn" type="button" style="max-width:170px;">Find matches</button>
@@ -661,10 +680,10 @@ input[type="range"] { width: 100%; accent-color: var(--gold2); }
           <button class="tab-btn" data-tab-group="explore" data-tab-target="explore-time">Over time</button>
           <button class="tab-btn" data-tab-group="explore" data-tab-target="explore-clusters">Similarity clusters</button>
         </div>
-        <div id="explore-genres" class="tab-panel active"><div class="chart-card"><div class="section-title-sm">Genre distribution</div><div class="bar-chart" id="genre-chart"></div></div></div>
-        <div id="explore-ratings" class="tab-panel"><div class="chart-card"><div class="section-title-sm">Rating distribution</div><canvas id="rating-canvas" width="900" height="240"></canvas></div></div>
-        <div id="explore-time" class="tab-panel"><div class="chart-card"><div class="section-title-sm">Movies released per year</div><canvas id="time-canvas" width="900" height="240"></canvas></div></div>
-        <div id="explore-clusters" class="tab-panel"><div class="chart-card"><div class="section-title-sm">2D similarity map</div><canvas id="pca-canvas" width="900" height="320"></canvas></div></div>
+        <div id="explore-genres" class="tab-panel active"><div class="chart-card" id="tour-explore-card"><div class="section-title-sm">Genre distribution</div><div class="bar-chart" id="genre-chart"></div></div></div>
+        <div id="explore-ratings" class="tab-panel"><div class="chart-card"><div class="section-title-sm">Rating distribution</div><div class="bar-chart" id="rating-chart"></div></div></div>
+        <div id="explore-time" class="tab-panel"><div class="chart-card"><div class="section-title-sm">Movies released over time</div><div class="bar-chart" id="time-chart"></div></div></div>
+        <div id="explore-clusters" class="tab-panel"><div class="chart-card"><div class="section-title-sm">Similarity clusters</div><div class="cluster-grid" id="cluster-chart"></div></div></div>
       </section>
 
       <section id="page-revenue" class="page">
@@ -747,6 +766,25 @@ input[type="range"] { width: 100%; accent-color: var(--gold2); }
   </div>
 </div>
 
+<div class="detail-modal" id="detail-modal">
+  <div class="detail-modal-card" id="detail-modal-card"></div>
+</div>
+
+<div class="tour-overlay" id="tour-overlay">
+  <div class="tour-popover">
+    <div class="muted" id="tour-counter" style="margin-bottom:8px;"></div>
+    <h4 id="tour-title">App tour</h4>
+    <p id="tour-body"></p>
+    <div class="movie-actions" style="padding-top:0;">
+      <button class="ghost-btn" id="tour-prev-btn" type="button">Back</button>
+      <button class="ghost-btn" id="tour-next-btn" type="button">Next</button>
+    </div>
+    <div class="tour-launch">
+      <button class="ghost-btn" id="tour-skip-btn" type="button">End tour</button>
+    </div>
+  </div>
+</div>
+
 <script>
 const MOVIES = __MOVIE_DATA__;
 const STORAGE_KEY = 'cinema-to-watch-v3';
@@ -764,6 +802,16 @@ let activeSearchResults = [];
 let tourStep = 0;
 let searchDebounce = null;
 let heroIndex = 0;
+let activeTourStep = -1;
+
+const TOUR_STEPS = [
+  { page: 'home', selector: '#tour-home-hero', title: 'Home overview', body: 'This hero area highlights featured picks and gives users a quick sense of the current catalog and visual style of the app.' },
+  { page: 'foryou', selector: '#tour-nav-foryou', title: 'For You feed', body: 'The For You page adapts to saved interests and watched history so users can quickly see more personal recommendations.' },
+  { page: 'recommendations', selector: '#tour-search-row', title: 'Recommendation search', body: 'Users can search by title or mood here. The app ranks results with browser-side TF-IDF and cosine similarity.' },
+  { page: 'explore', selector: '#tour-explore-card', title: 'Dataset insights', body: 'Explore Data summarizes the bundled movie snapshot with visible charts and cluster summaries so users can inspect the catalog.' },
+  { page: 'profile', selector: '#profile-interests-grid', title: 'Profile and preferences', body: 'Users can update interests here, and those saved choices immediately influence recommendation ranking and feed content.' },
+  { page: 'home', selector: '#tour-sidebar-footer', title: 'Settings and session actions', body: 'Theme switching and sign-out are always available from the sidebar footer, so users do not need to hunt for app controls.' },
+];
 
 const loadStore = () => {
   try {
@@ -808,6 +856,25 @@ function persistStore() {
 function showSplash() {
   $('splash').classList.add('show');
   setTimeout(() => $('splash').classList.remove('show'), 700);
+}
+
+function makePosterFallback(movie) {
+  const title = escapeHtml(movie.title || 'Movie');
+  const year = movie.year || '—';
+  const genre = escapeHtml((movie.genres || []).slice(0, 2).map(normalizeGenreLabel).join(' · ') || 'Movie');
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="600" height="900" viewBox="0 0 600 900"><defs><linearGradient id="g" x1="0" x2="1" y1="0" y2="1"><stop stop-color="#1d2230"/><stop offset="1" stop-color="#121720"/></linearGradient></defs><rect width="600" height="900" fill="url(#g)"/><rect x="36" y="36" width="528" height="828" rx="24" fill="none" stroke="#d6c3a5" stroke-opacity="0.35"/><text x="56" y="130" fill="#e0a84b" font-family="Arial, sans-serif" font-size="28">Cinema to Watch</text><text x="56" y="220" fill="#f1ede5" font-family="Arial, sans-serif" font-weight="700" font-size="46">${title}</text><text x="56" y="290" fill="#9ca4b4" font-family="Arial, sans-serif" font-size="28">${year} · ${genre}</text><text x="56" y="760" fill="#d6c3a5" font-family="Arial, sans-serif" font-size="26">Poster unavailable</text></svg>`;
+  return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
+}
+
+function getPosterUrl(movie) {
+  const raw = movie.poster || '';
+  return raw && !raw.includes('placehold.co') ? raw : makePosterFallback(movie);
+}
+
+function posterImage(movie, loading = 'lazy') {
+  const src = getPosterUrl(movie);
+  const fallback = makePosterFallback(movie);
+  return `<img src="${src}" alt="${escapeHtml(movie.title)}" loading="${loading}" referrerpolicy="no-referrer" onerror="this.onerror=null;this.src='${fallback}'">`;
 }
 
 function formatMoney(value) {
@@ -925,7 +992,7 @@ function clearAlert(id) {
 
 function buildPosterWall() {
   $('poster-wall').innerHTML = HERO_MOVIES.concat(HERO_MOVIES).map((movie) => `
-    <img src="${movie.poster}" alt="${escapeHtml(movie.title)}" loading="lazy">
+    ${posterImage(movie)}
   `).join('');
 }
 
@@ -1013,6 +1080,7 @@ function recordActivity(action, movie, details = {}) {
   });
   state.activity = state.activity.slice(0, 50);
   syncSessionToAccount();
+  window.setTimeout(notifyFrameHeight, 30);
 }
 
 function syncSessionToAccount() {
@@ -1065,6 +1133,7 @@ function signOut() {
   $('app').classList.remove('visible');
   $('auth-overlay').style.display = 'grid';
   showAuthStep('step-auth');
+  window.setTimeout(notifyFrameHeight, 30);
 }
 
 function doGuestLogin() {
@@ -1155,7 +1224,7 @@ function buildMovieCard(movie, options = {}) {
   const similarityBadge = options.similarity != null ? `<div class="tag">Match ${(options.similarity * 100).toFixed(0)}%</div>` : '';
   return `
     <article class="movie-card">
-      <div class="poster-frame"><img src="${movie.poster}" alt="${escapeHtml(movie.title)}" loading="lazy"></div>
+      <div class="poster-frame">${posterImage(movie)}</div>
       <div class="movie-title">${escapeHtml(movie.title)}</div>
       <div class="movie-meta">${movie.year || '—'} · ★ ${movie.rating.toFixed(1)} · ${(movie.genres || []).slice(0, 2).map(normalizeGenreLabel).join(', ')}</div>
       ${similarityBadge}
@@ -1176,9 +1245,9 @@ function openMovieDetails(movieId) {
   const movie = getMovieById(movieId);
   if (!movie) return;
   selectedMovieId = movie.id;
-  $('detail-panel').innerHTML = `
+  $('detail-modal-card').innerHTML = `
     <div>
-      <div class="poster-frame"><img src="${movie.poster}" alt="${escapeHtml(movie.title)}"></div>
+      <div class="poster-frame">${posterImage(movie, "eager")}</div>
     </div>
     <div>
       <div class="hero-chip">${movie.year || 'Unknown year'} · ${(movie.genres || []).map(normalizeGenreLabel).slice(0, 3).join(' · ')}</div>
@@ -1194,8 +1263,8 @@ function openMovieDetails(movieId) {
       </div>
     </div>
   `;
-  $('detail-panel').classList.add('visible');
-  $('detail-panel').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  $('detail-modal').classList.add('visible');
+  notifyFrameHeight();
   $('detail-watch-btn').addEventListener('click', () => markWatched(movie.id));
   $('detail-clear-btn').addEventListener('click', clearDetails);
   $('detail-share-btn').addEventListener('click', async () => {
@@ -1206,8 +1275,9 @@ function openMovieDetails(movieId) {
 
 function clearDetails() {
   selectedMovieId = null;
-  $('detail-panel').classList.remove('visible');
-  $('detail-panel').innerHTML = '';
+  $('detail-modal').classList.remove('visible');
+  $('detail-modal-card').innerHTML = '';
+  notifyFrameHeight();
 }
 
 function markWatched(movieId) {
@@ -1390,63 +1460,26 @@ function renderHistory() {
   });
 }
 
-function drawLineChart(canvasId, values, labels) {
-  const canvas = $(canvasId);
-  const ctx = canvas.getContext('2d');
-  const width = canvas.width;
-  const height = canvas.height;
-  ctx.clearRect(0, 0, width, height);
-  const maxValue = Math.max(...values, 1);
-  const minValue = Math.min(...values, 0);
-  const range = Math.max(maxValue - minValue, 1);
-  const pad = 28;
-
-  ctx.strokeStyle = 'rgba(150, 150, 170, 0.2)';
-  ctx.lineWidth = 1;
-  for (let i = 0; i < 4; i += 1) {
-    const y = pad + ((height - pad * 2) / 3) * i;
-    ctx.beginPath();
-    ctx.moveTo(pad, y);
-    ctx.lineTo(width - pad, y);
-    ctx.stroke();
-  }
-
-  ctx.strokeStyle = '#e0a84b';
-  ctx.lineWidth = 3;
-  ctx.beginPath();
-  values.forEach((value, index) => {
-    const x = pad + ((width - pad * 2) / Math.max(values.length - 1, 1)) * index;
-    const y = height - pad - ((value - minValue) / range) * (height - pad * 2);
-    if (index === 0) ctx.moveTo(x, y);
-    else ctx.lineTo(x, y);
-  });
-  ctx.stroke();
-
-  ctx.fillStyle = state.theme === 'light' ? '#7c5a34' : '#9ca4b4';
-  ctx.font = '11px DM Sans';
-  labels.forEach((label, index) => {
-    if (index % Math.ceil(labels.length / 5) === 0 || index === labels.length - 1) {
-      const x = pad + ((width - pad * 2) / Math.max(labels.length - 1, 1)) * index;
-      ctx.fillText(label, x - 10, height - 8);
-    }
-  });
+function renderBarRows(targetId, rows) {
+  const maxValue = Math.max(...rows.map((row) => row.value), 1);
+  $(targetId).innerHTML = rows.map((row) => `
+    <div class="bar-row">
+      <div class="bar-label">${escapeHtml(row.label)}</div>
+      <div class="bar-track"><div class="bar-fill" style="width:${(row.value / maxValue) * 100}%"></div></div>
+      <div class="muted">${row.display ?? row.value}</div>
+    </div>
+  `).join('');
 }
 
-function drawScatter(canvasId, points) {
-  const canvas = $(canvasId);
-  const ctx = canvas.getContext('2d');
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  const pad = 34;
-  ctx.strokeStyle = 'rgba(150,150,170,0.2)';
-  ctx.strokeRect(pad, pad, canvas.width - pad * 2, canvas.height - pad * 2);
-  points.forEach((point) => {
-    const x = pad + point.x * (canvas.width - pad * 2);
-    const y = pad + point.y * (canvas.height - pad * 2);
-    ctx.fillStyle = point.color;
-    ctx.beginPath();
-    ctx.arc(x, y, 4.5, 0, Math.PI * 2);
-    ctx.fill();
-  });
+function notifyFrameHeight() {
+  const height = Math.max(
+    document.body.scrollHeight,
+    document.documentElement.scrollHeight,
+    document.body.offsetHeight,
+    document.documentElement.offsetHeight,
+    window.innerHeight,
+  );
+  window.parent.postMessage({ isStreamlitMessage: true, type: 'streamlit:setFrameHeight', height }, '*');
 }
 
 function renderExploreCharts() {
@@ -1454,41 +1487,43 @@ function renderExploreCharts() {
     movie.genres.forEach((genre) => { acc[genre] = (acc[genre] || 0) + 1; });
     return acc;
   }, {})).sort((a, b) => b[1] - a[1]).slice(0, 8);
-  const maxGenreCount = Math.max(...genreCounts.map(([, count]) => count), 1);
-  $('genre-chart').innerHTML = genreCounts.map(([genre, count]) => `
-    <div class="bar-row">
-      <div class="bar-label">${escapeHtml(normalizeGenreLabel(genre))}</div>
-      <div class="bar-track"><div class="bar-fill" style="width:${(count / maxGenreCount) * 100}%"></div></div>
-      <div class="muted">${count}</div>
+  renderBarRows('genre-chart', genreCounts.map(([genre, count]) => ({ label: normalizeGenreLabel(genre), value: count })));
+
+  const ratingBuckets = [
+    { label: '5–6', min: 5, max: 6 },
+    { label: '6–7', min: 6, max: 7 },
+    { label: '7–8', min: 7, max: 8 },
+    { label: '8–9', min: 8, max: 9 },
+    { label: '9+', min: 9, max: 11 },
+  ].map((bucket) => ({
+    label: bucket.label,
+    value: ENRICHED_MOVIES.filter((movie) => movie.rating >= bucket.min && movie.rating < bucket.max).length,
+  }));
+  renderBarRows('rating-chart', ratingBuckets);
+
+  const decadeBuckets = Object.entries(ENRICHED_MOVIES.reduce((acc, movie) => {
+    if (!movie.year) return acc;
+    const decade = `${Math.floor(movie.year / 10) * 10}s`;
+    acc[decade] = (acc[decade] || 0) + 1;
+    return acc;
+  }, {})).sort((a, b) => a[0].localeCompare(b[0]));
+  renderBarRows('time-chart', decadeBuckets.map(([label, value]) => ({ label, value })));
+
+  const topGenreClusters = genreCounts.slice(0, 6).map(([genre, count]) => {
+    const sample = ENRICHED_MOVIES.filter((movie) => movie.genres.includes(genre)).slice(0, 3);
+    const avg = sample.length
+      ? (ENRICHED_MOVIES.filter((movie) => movie.genres.includes(genre)).reduce((sum, movie) => sum + movie.rating, 0) / ENRICHED_MOVIES.filter((movie) => movie.genres.includes(genre)).length).toFixed(1)
+      : '0.0';
+    return { genre, count, avg, sample };
+  });
+  $('cluster-chart').innerHTML = topGenreClusters.map((cluster) => `
+    <div class="cluster-card">
+      <strong>${escapeHtml(normalizeGenreLabel(cluster.genre))}</strong>
+      <div class="muted" style="margin-bottom:10px;">${cluster.count} movies · avg rating ${cluster.avg}</div>
+      <div class="pill-row">${cluster.sample.map((movie) => `<span class="tag">${escapeHtml(movie.title)}</span>`).join('')}</div>
     </div>
   `).join('');
-
-  const ratingBuckets = [0, 0, 0, 0, 0];
-  ENRICHED_MOVIES.forEach((movie) => {
-    const bucket = Math.min(4, Math.max(0, Math.floor((movie.rating - 5) / 1)));
-    ratingBuckets[bucket] += 1;
-  });
-  drawLineChart('rating-canvas', ratingBuckets, ['5–6', '6–7', '7–8', '8–9', '9+']);
-
-  const yearly = Object.entries(ENRICHED_MOVIES.reduce((acc, movie) => {
-    if (movie.year) acc[movie.year] = (acc[movie.year] || 0) + 1;
-    return acc;
-  }, {})).sort((a, b) => Number(a[0]) - Number(b[0]));
-  drawLineChart('time-canvas', yearly.map(([, count]) => count), yearly.map(([year]) => year));
-
-  const genreColors = ['#e0a84b', '#c0525a', '#5b8fd4', '#73c58a', '#b577d1', '#6abedc'];
-  const topGenres = genreCounts.map(([genre]) => genre);
-  const points = ENRICHED_MOVIES.slice(0, 80).map((movie, index) => {
-    const genreIndex = topGenres.findIndex((genre) => movie.genres.includes(genre));
-    const x = Math.min(1, Math.max(0, (movie.rating - 5) / 4.5));
-    const y = Math.min(1, Math.max(0, 1 - (movie.popularity / (HERO_MOVIES[0].popularity || 1))));
-    return {
-      x,
-      y,
-      color: genreColors[(genreIndex >= 0 ? genreIndex : index) % genreColors.length],
-    };
-  });
-  drawScatter('pca-canvas', points);
+  notifyFrameHeight();
 }
 
 function renderRevenue() {
@@ -1543,7 +1578,7 @@ function renderProfile() {
   const watchedItems = getWatchedMovies().slice(0, 8);
   $('profile-history').innerHTML = watchedItems.length ? watchedItems.map((movie) => `
     <div class="activity-row">
-      <div class="mini-poster"><img src="${movie.poster}" alt="${escapeHtml(movie.title)}"></div>
+      <div class="mini-poster">${posterImage(movie)}</div>
       <div>
         <div style="font-weight:700;">${escapeHtml(movie.title)}</div>
         <div class="muted" style="font-size:12px;">${movie.year || '—'} · ${(movie.genres || []).slice(0, 2).map(normalizeGenreLabel).join(', ')}</div>
@@ -1583,16 +1618,19 @@ function switchPage(pageId) {
   if (pageId === 'explore') renderExploreCharts();
   if (pageId === 'profile') renderProfile();
   if (pageId === 'history') renderHistory();
+  window.setTimeout(notifyFrameHeight, 30);
 }
 
 function closeSidebar() {
   $('sidebar').classList.remove('open');
   $('sidebar-backdrop').classList.remove('show');
+  window.setTimeout(notifyFrameHeight, 30);
 }
 
 function openSidebar() {
   $('sidebar').classList.add('open');
   $('sidebar-backdrop').classList.add('show');
+  window.setTimeout(notifyFrameHeight, 30);
 }
 
 function exportRecommendations() {
@@ -1626,16 +1664,53 @@ function renderAll() {
   renderGenreFilters();
   renderContact();
   syncSessionToAccount();
+  window.setTimeout(notifyFrameHeight, 30);
 }
 
-function cycleTour() {
-  const steps = document.querySelectorAll('.tour-step');
-  steps.forEach((step, index) => step.classList.toggle('active', index === tourStep));
+function clearTourHighlights() {
+  document.querySelectorAll('.tour-highlight').forEach((node) => node.classList.remove('tour-highlight'));
+}
+
+function endTour(dismiss = false) {
+  activeTourStep = -1;
+  $('tour-overlay').classList.remove('visible');
+  clearTourHighlights();
+  if (dismiss) {
+    store.onboardingDismissed = true;
+    persistStore();
+    $('tour-card').style.display = 'none';
+  }
+  notifyFrameHeight();
+}
+
+function runTourStep(index) {
+  activeTourStep = index;
+  const step = TOUR_STEPS[index];
+  if (!step) return endTour();
+  switchPage(step.page);
+  window.setTimeout(() => {
+    clearTourHighlights();
+    const target = document.querySelector(step.selector);
+    if (!target) return;
+    target.classList.add('tour-highlight');
+    target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    $('tour-overlay').classList.add('visible');
+    $('tour-counter').textContent = `Step ${index + 1} of ${TOUR_STEPS.length}`;
+    $('tour-title').textContent = step.title;
+    $('tour-body').textContent = step.body;
+    $('tour-prev-btn').disabled = index === 0;
+    $('tour-next-btn').textContent = index === TOUR_STEPS.length - 1 ? 'Finish' : 'Next';
+    notifyFrameHeight();
+  }, 220);
+}
+
+function startTour() {
+  $('tour-card').style.display = 'block';
+  runTourStep(0);
 }
 
 function maybeShowTour() {
   $('tour-card').style.display = store.onboardingDismissed ? 'none' : 'block';
-  cycleTour();
 }
 
 function bindTabs() {
@@ -1670,6 +1745,7 @@ function bindEvents() {
   document.querySelectorAll('.nav-btn').forEach((button) => button.addEventListener('click', () => switchPage(button.dataset.page)));
   $('menu-btn').addEventListener('click', openSidebar);
   $('sidebar-backdrop').addEventListener('click', closeSidebar);
+  $('detail-modal').addEventListener('click', (event) => { if (event.target === $('detail-modal')) clearDetails(); });
   $('signout-btn').addEventListener('click', signOut);
   $('theme-btn').addEventListener('click', toggleTheme);
   $('theme-btn-mobile').addEventListener('click', toggleTheme);
@@ -1691,15 +1767,16 @@ function bindEvents() {
   document.querySelectorAll('#sl-budget, #sl-popularity, #sl-runtime, #sl-vote, #sl-count').forEach((input) => input.addEventListener('input', renderRevenue));
   $('save-profile-btn').addEventListener('click', saveProfileInterests);
   $('contact-btn').addEventListener('click', sendContactMessage);
-  $('tour-next-btn').addEventListener('click', () => {
-    tourStep = (tourStep + 1) % document.querySelectorAll('.tour-step').length;
-    cycleTour();
-  });
-  $('tour-dismiss-btn').addEventListener('click', () => {
-    store.onboardingDismissed = true;
-    persistStore();
-    maybeShowTour();
-  });
+  $('tour-start-btn').addEventListener('click', startTour);
+  $('tour-prev-btn').addEventListener('click', () => { if (activeTourStep > 0) runTourStep(activeTourStep - 1); });
+  $('tour-next-btn').addEventListener('click', () => { if (activeTourStep >= TOUR_STEPS.length - 1) endTour(); else runTourStep(activeTourStep + 1); });
+  $('tour-skip-btn').addEventListener('click', () => endTour(true));
+  $('tour-dismiss-btn').addEventListener('click', () => { store.onboardingDismissed = true; persistStore(); maybeShowTour(); });
+  window.addEventListener('resize', () => window.setTimeout(notifyFrameHeight, 30));
+  if (window.ResizeObserver) {
+    const observer = new ResizeObserver(() => window.requestAnimationFrame(notifyFrameHeight));
+    observer.observe(document.body);
+  }
   document.addEventListener('keydown', (event) => {
     if (event.key === '/' && currentPage === 'recommendations') {
       event.preventDefault();
@@ -1708,6 +1785,7 @@ function bindEvents() {
     if (event.key === 'Escape') {
       clearDetails();
       closeSidebar();
+      if (activeTourStep !== -1) endTour();
     }
   });
 }
@@ -1735,6 +1813,7 @@ function init() {
   }
   renderRevenue();
   renderHero();
+  notifyFrameHeight();
   setInterval(renderHero, 4500);
 }
 

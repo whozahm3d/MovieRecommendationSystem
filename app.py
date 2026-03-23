@@ -40,4 +40,4 @@ base_path = Path(__file__).parent
 html_template = (base_path / "ui" / "cinema_to_watch.html").read_text(encoding="utf-8")
 movie_snapshot = json.loads((base_path / "ui" / "movie_snapshot.json").read_text(encoding="utf-8"))
 html = html_template.replace("__MOVIE_DATA__", json.dumps(movie_snapshot, ensure_ascii=False))
-components.html(html, height=4600, scrolling=True)
+components.html(html, height=900, scrolling=False)
