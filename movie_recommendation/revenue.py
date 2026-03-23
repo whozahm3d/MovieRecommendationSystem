@@ -4,7 +4,7 @@ from dataclasses import dataclass
 
 import pandas as pd
 from sklearn.ensemble import RandomForestRegressor
-from sklearn.metrics import mean_absolute_error, r2_score
+from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 
@@ -16,6 +16,7 @@ class RevenueModelArtifacts:
     features: list[str]
     r2: float
     mae: float
+    rmse: float
     training_frame: pd.DataFrame
 
 
@@ -45,5 +46,6 @@ def train_revenue_model(df: pd.DataFrame) -> RevenueModelArtifacts:
         features=features,
         r2=r2_score(y_test, predictions),
         mae=mean_absolute_error(y_test, predictions),
+        rmse=mean_squared_error(y_test, predictions) ** 0.5,
         training_frame=revenue_df[features + ["revenue"]],
     )

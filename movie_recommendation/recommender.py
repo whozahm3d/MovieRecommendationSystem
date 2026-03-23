@@ -53,9 +53,19 @@ def build_official_recommender(df: pd.DataFrame) -> RecommenderArtifacts:
     pipeline = OFFICIAL_RECOMMENDATION_PIPELINE
     tfidf = TfidfVectorizer(max_features=pipeline.max_features, stop_words="english")
     tfidf_matrix = tfidf.fit_transform(df["text_features"])
-    svd = TruncatedSVD(n_components=pipeline.n_components, random_state=42)
-    reduced = svd.fit_transform(tfidf_matrix)
-    kmeans = KMeans(n_clusters=pipeline.n_clusters, random_state=42, n_init=10)
+
+    n_features = tfidf_matrix.shape[1]
+    n_samples = tfidf_matrix.shape[0]
+    if n_features <= 1 or n_samples <= 1:
+        reduced = tfidf_matrix.toarray()
+        svd = TruncatedSVD(n_components=1, random_state=42)
+    else:
+        n_components = min(pipeline.n_components, n_features - 1, n_samples - 1)
+        svd = TruncatedSVD(n_components=max(1, n_components), random_state=42)
+        reduced = svd.fit_transform(tfidf_matrix)
+
+    kmeans_clusters = min(pipeline.n_clusters, max(1, n_samples))
+    kmeans = KMeans(n_clusters=kmeans_clusters, random_state=42, n_init=10)
     movies = df.reset_index(drop=True).copy()
     movies["cluster"] = kmeans.fit_predict(reduced)
     similarity_matrix = cosine_similarity(reduced)

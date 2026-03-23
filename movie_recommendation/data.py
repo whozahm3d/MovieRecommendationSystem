@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import ast
 from pathlib import Path
-from typing import Iterable
 
 import numpy as np
 import pandas as pd
@@ -18,7 +17,7 @@ def _parse_name_list(raw_value: object) -> list[str]:
         items = ast.literal_eval(raw_value)
     except (ValueError, SyntaxError):
         return []
-    if not isinstance(items, Iterable):
+    if not isinstance(items, (list, tuple)):
         return []
     names: list[str] = []
     for item in items:

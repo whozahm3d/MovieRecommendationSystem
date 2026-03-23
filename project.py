@@ -97,12 +97,17 @@ def run_evaluate(dataset_dir: Path, sample_size: int, top_k: int) -> None:
     print(f"Release Window: {scorecard['start_year']}–{scorecard['end_year']}")
     print(f"Sample Size: {scorecard['sample_size']}")
     print(f"Top-k: {scorecard['top_k']}")
-    print(f"Titles With Results: {scorecard['titles_with_results']}")
+    print(f"Successful Queries: {scorecard['successful_queries']}")
     print(f"Catalog Coverage@k: {scorecard['catalog_coverage_at_k']:.2%}")
     print(f"Genre Coverage@k: {scorecard['genre_coverage_at_k']:.2%}")
+    print(f"Genre Hit Rate@k: {scorecard['genre_hit_rate_at_k']:.2%}")
+    print(f"Genre Jaccard@k: {scorecard['genre_jaccard_at_k']:.3f}")
     print(f"Mean Similarity@k: {scorecard['mean_similarity_at_k']:.3f}")
+    print(f"Mean Year Gap@k: {scorecard['mean_year_gap_at_k']:.1f}")
+    print(f"Average Recommended Rating: {scorecard['average_recommended_rating']:.2f}")
     print(f"Revenue R²: {scorecard['revenue_r2']:.2f}")
     print(f"Revenue MAE: ${scorecard['revenue_mae']:,.0f}")
+    print(f"Revenue RMSE: ${scorecard['revenue_rmse']:,.0f}")
 
 
 def run_recommend(dataset_dir: Path, title: str, genres: list[str], top: int) -> None:
@@ -138,6 +143,7 @@ def run_revenue(dataset_dir: Path, budget: float, popularity: float, runtime: fl
     print(f"Estimated ROI: {roi:+.1f}%")
     print(f"Model R²: {artifacts.r2:.2f}")
     print(f"Model MAE: ${artifacts.mae:,.0f}")
+    print(f"Model RMSE: ${artifacts.rmse:,.0f}")
 
 
 def main() -> None:

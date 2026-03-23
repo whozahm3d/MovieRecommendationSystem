@@ -312,6 +312,7 @@ def page_auth():
                 else:
                     st.error("Please fill in all fields.")
             st.divider()
+            st.caption("Demo authentication only — this portfolio build does not persist users or validate passwords against a backend.")
             st.caption("🔵 Google Sign-In: set GOOGLE_CLIENT_ID in .env and integrate via streamlit-oauth.")
 
         with tab_signup:
@@ -333,6 +334,7 @@ def page_auth():
                 else:
                     st.error("Please fill in all fields. Password must be at least 8 characters.")
             st.divider()
+            st.caption("Demo sign-up only — replace this with real backend auth before presenting it as a production feature.")
             st.caption("🔵 Google Sign-Up: configure GOOGLE_CLIENT_ID in .env.")
 
 
@@ -395,7 +397,7 @@ def page_home(df):
     st.markdown('<div class="page-sub">Welcome to Cinema to Watch — explore, discover, and track your favourite films.</div>', unsafe_allow_html=True)
 
     if df is None:
-        st.warning("⚠️ Dataset not found. Place `tmdb_5000_movies.csv` and `tmdb_5000_credits.csv` in the app directory.")
+        st.warning("⚠️ Dataset not found. Place `tmdb_5000_movies.csv` in the app directory. `tmdb_5000_credits.csv` is optional.")
         st.info("The app still works! The full ML features activate once the dataset is added.")
 
     # Hero banner

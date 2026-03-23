@@ -5,11 +5,11 @@ A portfolio-ready movie discovery project that combines **data cleaning**, **con
 This repository is now structured to support four portfolio goals:
 
 - **Version 1 — Make it polished:** cleaner codebase, reusable modules, consistent pipeline, app/CLI docs.
-- **Version 2 — Make it measurable:** a scorecard command that reports recommendation coverage and revenue-model metrics.
+- **Version 2 — Make it measurable:** a scorecard command that reports recommendation relevance, coverage, and revenue-model metrics.
 - **Version 3 — Make it deployable:** Streamlit config, environment guidance, and deployment steps.
 - **Version 4 — Add one more project:** a roadmap for pairing this app with a second portfolio project that fills skill gaps.
 
-## What this repo includes
+This repository is now structured to support four portfolio goals:
 
 ## Why this project is worth showing employers
 
@@ -26,7 +26,7 @@ This project demonstrates:
 ## Project highlights
 
 - **Official recommendation pipeline** shared by both the Streamlit app and the CLI.
-- **Portfolio scorecard** command to surface measurable evaluation metrics.
+- **Portfolio scorecard** command to surface measurable evaluation metrics that go beyond “the app runs.”
 - **Revenue prediction workflow** for a second ML use case in the same repo.
 - **Interactive analytics** for genre distribution, runtime, ratings, and cluster visualization.
 - **Deployment-ready defaults** with `.streamlit/config.toml` and environment-file guidance.
@@ -98,9 +98,7 @@ It gives you a recommendation story that is easy to explain in interviews:
 pip install -r requirements.txt
 ```
 
-```bash
-pip install -r requirements.txt
-```
+---
 
 ## Data requirements
 
@@ -111,8 +109,7 @@ Place the TMDB dataset files in the project root.
 
 The app and CLI work without the credits file, but recommendation quality improves when it is available.
 
-- Required: `tmdb_5000_movies.csv`
-- Optional: `tmdb_5000_credits.csv`
+---
 
 ## Running locally
 
@@ -174,6 +171,10 @@ This repository already includes the core polish pass:
 - add unit tests around dataset loading and recommendation functions
 - add logging and friendlier error messages for missing datasets or bad inputs
 
+### Important portfolio note
+
+The current auth flow is intentionally **demo-only**. If you present this project to employers, describe authentication honestly as a prototype unless you replace it with a real backend.
+
 ---
 
 ## Version 2 — Make it measurable
@@ -190,9 +191,12 @@ The scorecard reports:
 
 - **Catalog Coverage@k** — how much of the catalog appears in top-k recommendation samples
 - **Genre Coverage@k** — how broadly the recommender covers the genre space
+- **Genre Hit Rate@k** — how often recommended titles share at least one genre with the query title
+- **Genre Jaccard@k** — average genre overlap strength between the query title and its recommendations
 - **Mean Similarity@k** — average similarity of returned recommendation sets
-- **Revenue R²** — regression goodness-of-fit for the revenue model
-- **Revenue MAE** — average prediction error in dollars
+- **Mean Year Gap@k** — average release-year distance between query titles and returned recommendations
+- **Average Recommended Rating** — average TMDB rating of surfaced recommendations
+- **Revenue R² / MAE / RMSE** — regression fit and error measurements for the revenue model
 
 ### Why this matters
 
@@ -272,6 +276,27 @@ If your target role is:
 - **Data/ML internship:** pair this with **Option C**.
 - **Data analyst internship:** pair this with **Option A**.
 - **Software/full-stack internship:** pair this with **Option B**.
+
+---
+
+## Resume-ready bullets
+
+You can adapt these directly for your resume:
+
+- Built a movie recommendation system using Python, pandas, scikit-learn, TF-IDF, Truncated SVD, K-Means, and cosine similarity.  
+- Developed a Streamlit application for personalized discovery, dataset analytics, and box-office revenue prediction.  
+- Refactored the project into a reusable Python package and CLI, improving maintainability and reproducibility.  
+- Added a measurable evaluation scorecard for recommendation coverage and revenue-model performance.  
+- Prepared the app for portfolio deployment with documented setup, environment configuration, and Streamlit defaults.  
+
+---
+
+## Future improvements
+
+- persist user accounts and watched history outside session state
+- add automated tests for the recommender and revenue pipeline
+- benchmark the official pipeline against a second recommender baseline
+- add screenshots, a live demo link, and a short case-study section to this README
 
 ---
 
