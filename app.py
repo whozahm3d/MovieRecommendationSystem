@@ -8,6 +8,7 @@ import os, re, json, time, smtplib, random, string
 from datetime import datetime, timedelta
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+from pathlib import Path
 from urllib.parse import quote_plus
 
 import numpy as np
@@ -45,6 +46,8 @@ GOOGLE_CLIENT_ID     = os.getenv("GOOGLE_CLIENT_ID",     "")
 GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET", "")
 ALLOW_DEV_EMAIL_VERIFICATION = os.getenv("ALLOW_DEV_EMAIL_VERIFICATION", "0") == "1"
 EMAIL_VERIFICATION_ENABLED = bool(SMTP_EMAIL and SMTP_PASSWORD) or ALLOW_DEV_EMAIL_VERIFICATION
+APP_DATA_DIR = Path(os.getenv("APP_DATA_DIR", ".app_data"))
+USER_STORE_FILE = APP_DATA_DIR / "users.json"
 
 # ─── CONSTANTS ─────────────────────────────────────────────────
 PORTFOLIO_MODE = os.getenv("PORTFOLIO_MODE", "0") == "1"
@@ -53,6 +56,25 @@ def default_user():
     if PORTFOLIO_MODE:
         return {"name": "Portfolio Guest", "email": "demo@portfolio.local", "provider": "guest"}
     return {}
+
+
+def load_persisted_users() -> dict[str, dict]:
+    if not USER_STORE_FILE.exists():
+        return {}
+    try:
+        with USER_STORE_FILE.open("r", encoding="utf-8") as handle:
+            payload = json.load(handle)
+        if isinstance(payload, dict):
+            return payload
+    except (json.JSONDecodeError, OSError):
+        return {}
+    return {}
+
+
+def save_persisted_users(users: dict[str, dict]) -> None:
+    APP_DATA_DIR.mkdir(parents=True, exist_ok=True)
+    with USER_STORE_FILE.open("w", encoding="utf-8") as handle:
+        json.dump(users, handle, indent=2)
 
 WIKI_POSTERS = {
     "Inception":               "https://upload.wikimedia.org/wikipedia/en/2/2e/Inception_%282010%29_theatrical_poster.jpg",
@@ -146,7 +168,7 @@ def init_state():
         "interests": [],
         "page": "Home",
         "selected_movie_id": None,
-        "registered_users": {},
+        "registered_users": load_persisted_users(),
     }
     for k, v in defaults.items():
         if k not in st.session_state:
@@ -318,6 +340,7 @@ def normalize_external_url(url) -> str | None:
 
 
 def register_user_account(user_data: dict):
+    st.session_state.registered_users = load_persisted_users()
     email = user_data.get("email", "").strip().lower()
     if not email:
         return
@@ -327,13 +350,40 @@ def register_user_account(user_data: dict):
         "password": user_data.get("password", ""),
         "provider": user_data.get("provider", "email"),
         "interests": user_data.get("interests", []),
+        "watched_ids": user_data.get("watched_ids", []),
+        "activity": user_data.get("activity", []),
     }
+    save_persisted_users(st.session_state.registered_users)
 
 
 def get_registered_user(email: str) -> dict | None:
     if not email:
         return None
+    if "registered_users" not in st.session_state or not st.session_state.registered_users:
+        st.session_state.registered_users = load_persisted_users()
     return st.session_state.registered_users.get(email.strip().lower())
+
+
+def persist_user_state(email: str, *, interests=None, watched_ids=None, activity=None) -> None:
+    account = get_registered_user(email)
+    if account is None:
+        return
+    if interests is not None:
+        account["interests"] = interests
+    if watched_ids is not None:
+        account["watched_ids"] = watched_ids
+    if activity is not None:
+        account["activity"] = activity
+    save_persisted_users(st.session_state.registered_users)
+
+
+def hydrate_user_session(email: str) -> None:
+    account = get_registered_user(email)
+    if account is None:
+        return
+    st.session_state.interests = account.get("interests", [])
+    st.session_state.watched_ids = account.get("watched_ids", [])
+    st.session_state.activity = account.get("activity", [])
 
 
 def set_selected_movie(movie_id):
@@ -442,11 +492,19 @@ def log_activity(action: str, movie_title: str, genres: list = None):
         "time": datetime.now().strftime("%H:%M"),
         "date": datetime.now().strftime("%Y-%m-%d"),
     })
+    if st.session_state.user.get("email"):
+        persist_user_state(st.session_state.user["email"], activity=st.session_state.activity)
 
 def mark_watched(movie_id: int, title: str, genres: list):
     if movie_id not in st.session_state.watched_ids:
         st.session_state.watched_ids.append(movie_id)
         log_activity("Watched", title, genres)
+        if st.session_state.user.get("email"):
+            persist_user_state(
+                st.session_state.user["email"],
+                watched_ids=st.session_state.watched_ids,
+                activity=st.session_state.activity,
+            )
 
 
 # ══════════════════════════════════════════════════════════════
@@ -524,6 +582,7 @@ def page_auth():
                         registered_user = get_registered_user(st.session_state.user["email"])
                         if registered_user is not None:
                             registered_user["interests"] = selected
+                            save_persisted_users(st.session_state.registered_users)
                     st.session_state.authenticated = True
                     st.session_state.page = "Home"
                     st.rerun()
@@ -553,7 +612,7 @@ def page_auth():
                             "email": registered_user.get("email", email),
                             "provider": registered_user.get("provider", "email"),
                         }
-                        st.session_state.interests = registered_user.get("interests", [])
+                        hydrate_user_session(registered_user.get("email", email))
                         st.session_state.authenticated = True
                         st.session_state.page = "Home"
                         st.rerun()
@@ -1051,6 +1110,8 @@ def page_profile(df):
         new_interests = st.multiselect("Genres", ALL_GENRES, default=interests, key="profile_interests")
         if st.button("Save Interests"):
             st.session_state.interests = new_interests
+            if user.get("email"):
+                persist_user_state(user["email"], interests=new_interests)
             st.success("Saved!")
 
     with col_hist:

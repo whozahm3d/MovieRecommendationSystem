@@ -1,13 +1,14 @@
 # Movie Recommendation System
 
-A portfolio-ready movie discovery project that combines **data cleaning**, **content-based recommendations**, **revenue prediction**, and a polished **Streamlit application** on top of the TMDB 5000 Movie Dataset.
+A production-style movie discovery project built on the TMDB 5000 dataset. The repository combines a reusable recommendation package, a Streamlit application, a CLI, persistent local app storage, benchmark tooling, and experiment notebooks so the same core pipeline can be explored, evaluated, and presented professionally.
 
-This repository is now structured to support four portfolio goals:
+## Executive summary
 
-- **Version 1 — Make it polished:** cleaner codebase, reusable modules, consistent pipeline, app/CLI docs.
-- **Version 2 — Make it measurable:** a scorecard command that reports recommendation relevance, coverage, and revenue-model metrics.
-- **Version 3 — Make it deployable:** Streamlit config, environment guidance, and deployment steps.
-- **Version 4 — Add one more project:** a roadmap for pairing this app with a second portfolio project that fills skill gaps.
+- **Application:** Streamlit interface for movie discovery, poster-rich browsing, history, profile, analytics, and revenue prediction.
+- **Recommendation engine:** official TF-IDF → Truncated SVD → K-Means → cosine similarity pipeline.
+- **Benchmarking:** side-by-side comparison against a simpler TF-IDF cosine baseline.
+- **Persistence:** local account, interests, and watched-history storage outside Streamlit session state.
+- **Experiments:** dedicated notebooks for EDA and recommender experiments.
 
 ---
 
@@ -26,10 +27,27 @@ This project demonstrates:
 ## Project highlights
 
 - **Official recommendation pipeline** shared by both the Streamlit app and the CLI.
+- **Baseline benchmarking command** to compare the official recommender against a simpler TF-IDF cosine approach.
 - **Portfolio scorecard** command to surface measurable evaluation metrics that go beyond “the app runs.”
 - **Revenue prediction workflow** for a second ML use case in the same repo.
 - **Interactive analytics** for genre distribution, runtime, ratings, and cluster visualization.
+- **Persistent local account storage** so user accounts and watched history survive app reruns.
+- **Dedicated notebooks** for EDA and experiment tracking.
 - **Deployment-ready defaults** with `.streamlit/config.toml` and environment-file guidance.
+
+---
+
+## Suggested portfolio visuals
+
+To make the project easier to present, include screenshots or exported notebook visuals such as:
+
+1. **Top genres bar chart** from the EDA notebook.
+2. **Release trend area chart** for the catalog over time.
+3. **Rating distribution histogram** for the TMDB movie set.
+4. **Recommender benchmark table** comparing the official pipeline against the baseline.
+5. **Revenue feature importance chart** from the Random Forest model.
+
+The new notebooks in `notebooks/` are structured to help you generate these visuals quickly.
 
 ---
 
@@ -38,13 +56,16 @@ This project demonstrates:
 ```text
 MovieRecommendationSystem/
 ├── app.py                         # Streamlit application entry point
-├── project.py                     # CLI for pipeline, summary, evaluation, recommendations, revenue
+├── project.py                     # CLI for pipeline, summary, compare, evaluation, recommendations, revenue
 ├── movie_recommendation/
 │   ├── __init__.py
-│   ├── analysis.py                # Dataset summaries and portfolio scorecard metrics
+│   ├── analysis.py                # Dataset summaries, benchmarking, and scorecard metrics
 │   ├── data.py                    # Dataset loading and normalization
 │   ├── recommender.py             # Official recommendation pipeline
 │   └── revenue.py                 # Revenue model training and artifacts
+├── notebooks/
+│   ├── eda_overview.ipynb         # Exploratory data analysis and visual storytelling
+│   └── recommender_experiments.ipynb
 ├── .streamlit/config.toml         # Streamlit deployment defaults and theme
 ├── .gitignore
 ├── Project.ipynb                  # Original notebook exploration
@@ -86,9 +107,15 @@ It gives you a recommendation story that is easy to explain in interviews:
 ### CLI workflows
 - Print the official pipeline.
 - Print dataset summary statistics.
+- Benchmark the official pipeline against a baseline recommender.
 - Print a measurable project scorecard.
 - Generate recommendations for a movie.
 - Predict revenue from custom feature values.
+
+### Persistence
+- User accounts are stored locally in `.app_data/users.json`.
+- Watched history and saved interests are restored when the same user signs in again.
+- `.app_data/` is ignored by Git so local usage data does not pollute the repository.
 
 ---
 
@@ -135,6 +162,12 @@ Print dataset summary:
 python project.py summary
 ```
 
+Benchmark the official recommender against the baseline:
+
+```bash
+python project.py compare --sample-size 100 --top 5
+```
+
 Print a measurable project scorecard:
 
 ```bash
@@ -169,13 +202,13 @@ This repository already includes the core polish pass:
 ### What to improve next for even more polish
 
 - add screenshots or a short demo GIF to this README
-- replace demo authentication with real backend auth or remove it from the portfolio version
-- add unit tests around dataset loading and recommendation functions
+- replace local file-backed auth persistence with a real backend or database for multi-user deployment
+- add integration tests around dataset loading and recommendation functions
 - add logging and friendlier error messages for missing datasets or bad inputs
 
 ### Important portfolio note
 
-The current auth flow is intentionally **demo-only**. If you present this project to employers, describe authentication honestly as a prototype unless you replace it with a real backend.
+The current auth flow now persists accounts, interests, and watched history to a local file for single-machine usage. For production deployment, replace that file-backed storage with a real backend or database.
 
 ---
 
@@ -203,6 +236,18 @@ The scorecard reports:
 ### Why this matters
 
 Employers want more than “it works.” They want to see that you can **measure quality**, **compare approaches**, and **explain trade-offs**.
+
+### Benchmark command
+
+```bash
+python project.py compare --sample-size 100 --top 5
+```
+
+This benchmark compares:
+
+- `official_clustered_tfidf_svd_cosine`
+- `baseline_tfidf_cosine`
+- `ablation_tfidf_svd_cosine` (when dimensionality permits)
 
 ---
 
@@ -238,6 +283,17 @@ This repo now includes a Streamlit config in `.streamlit/config.toml` so the app
 - [ ] dataset path is documented
 - [ ] secrets are stored outside the repo
 - [ ] optional services degrade gracefully when keys are absent
+
+---
+
+## Notebook workflow
+
+The repository now separates exploratory work from the application code:
+
+- `notebooks/eda_overview.ipynb` for catalog exploration, distributions, and presentation-ready charts.
+- `notebooks/recommender_experiments.ipynb` for recommendation experiments, benchmark comparisons, and iteration notes.
+
+Use these notebooks for analysis and storytelling, while keeping `app.py`, `project.py`, and the package focused on reusable product logic.
 
 ---
 
