@@ -52,3 +52,23 @@ Include screenshots or notebook visuals such as:
 ---
 
 ## Project structure
+```
+MovieRecommendationSystem/
+├── app.py
+├── project.py
+├── movie_recommendation/
+│ ├── init.py
+│ ├── analysis.py
+│ ├── data.py
+│ ├── recommender.py
+│ └── revenue.py
+├── notebooks/
+│ ├── eda_overview.ipynb
+│ └── recommender_experiments.ipynb
+├── .streamlit/config.toml
+├── .gitignore
+├── Project.ipynb
+├── requirements.txt
+└── tmdb_5000_movies.csv
+```
+
