@@ -359,6 +359,9 @@ input[type="range"] { width: 100%; accent-color: var(--gold2); }
 .tour-popover p { margin: 0 0 14px; color: var(--muted); line-height: 1.65; }
 .tour-highlight { position: relative; z-index: 131 !important; outline: 3px solid var(--gold2); outline-offset: 6px; border-radius: 14px; }
 .tour-launch { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 12px; }
+.profile-form { display: grid; gap: 12px; }
+.theme-toggle-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 12px; }
+.theme-toggle-row .ghost-btn.active-theme { border-color: var(--gold2); color: var(--gold2); background: rgba(214,195,165,0.14); }
 .detail-modal-card {
   width: min(980px, 100%); max-height: min(86vh, 980px); overflow-y: auto;
   padding: 22px; border: 1px solid var(--border); border-radius: 22px;
@@ -550,7 +553,7 @@ input[type="range"] { width: 100%; accent-color: var(--gold2); }
   <div class="mobile-bar">
     <button class="icon-btn" id="menu-btn" type="button">☰</button>
     <div class="mobile-brand">Cinema to Watch</div>
-    <button class="icon-btn" id="theme-btn-mobile" type="button">☀️</button>
+    <button class="icon-btn" id="profile-shortcut-btn" type="button">👤</button>
   </div>
   <div id="sidebar-backdrop"></div>
   <div class="layout">
@@ -573,7 +576,6 @@ input[type="range"] { width: 100%; accent-color: var(--gold2); }
         <div class="user-name" id="sidebar-name">Portfolio Guest</div>
         <div class="user-email" id="sidebar-email">demo@portfolio.local</div>
         <div class="sidebar-actions">
-          <button class="ghost-btn" id="theme-btn" type="button">☀️ Theme</button>
           <button class="ghost-btn" id="signout-btn" type="button">Sign out</button>
         </div>
       </div>
@@ -714,7 +716,7 @@ input[type="range"] { width: 100%; accent-color: var(--gold2); }
 
       <section id="page-profile" class="page">
         <div class="page-title">Profile</div>
-        <p class="page-sub">Update saved interests, confirm persistent data, and review your latest watched titles.</p>
+        <p class="page-sub">Review account details, update your personal info, switch theme mode, and save interests in one place.</p>
         <div class="profile-grid">
           <div>
             <div class="panel">
@@ -725,6 +727,17 @@ input[type="range"] { width: 100%; accent-color: var(--gold2); }
                 <div class="metric-card"><div class="metric-value" id="profile-watched">0</div><div class="metric-label">Watched</div></div>
                 <div class="metric-card"><div class="metric-value" id="profile-activity">0</div><div class="metric-label">Activity</div></div>
                 <div class="metric-card"><div class="metric-value" id="profile-interests">0</div><div class="metric-label">Interests</div></div>
+              </div>
+            </div>
+            <div class="panel" style="margin-top:18px;">
+              <div class="section-title-sm" style="margin-bottom:12px;">User information</div>
+              <div class="profile-form">
+                <div class="field-group"><label class="field-label" for="profile-name-input">Full name</label><input class="input" id="profile-name-input" type="text" placeholder="Your full name"></div>
+                <div class="field-group"><label class="field-label" for="profile-email-input">Email</label><input class="input" id="profile-email-input" type="email" placeholder="you@example.com"></div>
+                <div class="field-group"><label class="field-label">Theme mode</label><div class="theme-toggle-row"><button class="ghost-btn" id="theme-light-btn" type="button">Light mode</button><button class="ghost-btn" id="theme-dark-btn" type="button">Dark mode</button></div></div>
+                <button class="btn-primary" id="save-user-btn" type="button">Save profile</button>
+                <div class="success-msg" id="user-save-msg">Profile updated locally.</div>
+                <div class="error-msg" id="user-save-err">Please enter a valid name and email.</div>
               </div>
             </div>
             <div class="panel" style="margin-top:18px;">
@@ -963,13 +976,17 @@ function cosineSimilarity(left, right) {
   return dot / ((left.norm || 1) * (right.norm || 1));
 }
 
+function updateThemeControls() {
+  if ($('theme-light-btn')) $('theme-light-btn').classList.toggle('active-theme', state.theme === 'light');
+  if ($('theme-dark-btn')) $('theme-dark-btn').classList.toggle('active-theme', state.theme === 'dark');
+}
+
 function setTheme(theme) {
   state.theme = theme;
   document.body.classList.toggle('light', theme === 'light');
-  const icon = theme === 'light' ? '🌙' : '☀️';
-  $('theme-btn').textContent = `${icon} Theme`;
-  $('theme-btn-mobile').textContent = icon;
+  updateThemeControls();
   persistStore();
+  window.setTimeout(notifyFrameHeight, 30);
 }
 
 function toggleTheme() {
@@ -1472,13 +1489,19 @@ function renderBarRows(targetId, rows) {
 }
 
 function notifyFrameHeight() {
+  const mainHeight = document.querySelector('.main')?.scrollHeight || 0;
+  const appHeight = $('app')?.scrollHeight || 0;
+  const modalHeight = $('detail-modal')?.classList.contains('visible') ? ($('detail-modal-card')?.scrollHeight || 0) + 120 : 0;
   const height = Math.max(
     document.body.scrollHeight,
     document.documentElement.scrollHeight,
     document.body.offsetHeight,
     document.documentElement.offsetHeight,
     window.innerHeight,
-  );
+    mainHeight + 80,
+    appHeight + 80,
+    modalHeight,
+  ) + 24;
   window.parent.postMessage({ isStreamlitMessage: true, type: 'streamlit:setFrameHeight', height }, '*');
 }
 
@@ -1568,9 +1591,12 @@ function updateUserSurface() {
   $('profile-name').textContent = name;
   $('profile-email').textContent = email;
   $('profile-avatar').textContent = name.split(' ').slice(0, 2).map((part) => part[0].toUpperCase()).join('');
+  $('profile-name-input').value = name;
+  $('profile-email-input').value = email;
   $('profile-watched').textContent = String(state.watched.length);
   $('profile-activity').textContent = String(state.activity.length);
   $('profile-interests').textContent = String(state.interests.length);
+  updateThemeControls();
 }
 
 function renderProfile() {
@@ -1597,6 +1623,37 @@ function saveProfileInterests() {
   renderGenreFilters();
   $('profile-save-msg').style.display = 'block';
   window.setTimeout(() => { $('profile-save-msg').style.display = 'none'; }, 2200);
+}
+
+function saveUserProfile() {
+  const name = $('profile-name-input').value.trim();
+  const email = $('profile-email-input').value.trim().toLowerCase();
+  const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  if (name.length < 2 || !emailOk) {
+    $('user-save-err').style.display = 'block';
+    $('user-save-msg').style.display = 'none';
+    return;
+  }
+  $('user-save-err').style.display = 'none';
+  const previousEmail = state.user?.email || email;
+  state.user = { ...(state.user || {}), name, email };
+  if (!state.user.guest) {
+    const previousAccount = store.accounts[previousEmail] || {};
+    if (previousEmail !== email) delete store.accounts[previousEmail];
+    store.accounts[email] = {
+      ...previousAccount,
+      name,
+      email,
+      password: previousAccount.password || '',
+      interests: [...state.interests],
+      watched: [...state.watched],
+      activity: [...state.activity],
+    };
+  }
+  syncSessionToAccount();
+  updateUserSurface();
+  $('user-save-msg').style.display = 'block';
+  window.setTimeout(() => { $('user-save-msg').style.display = 'none'; }, 2200);
 }
 
 function renderContact() {
@@ -1744,11 +1801,12 @@ function bindEvents() {
   $('su-pass2').addEventListener('input', validatePasswordMatch);
   document.querySelectorAll('.nav-btn').forEach((button) => button.addEventListener('click', () => switchPage(button.dataset.page)));
   $('menu-btn').addEventListener('click', openSidebar);
+  $('profile-shortcut-btn').addEventListener('click', () => switchPage('profile'));
   $('sidebar-backdrop').addEventListener('click', closeSidebar);
   $('detail-modal').addEventListener('click', (event) => { if (event.target === $('detail-modal')) clearDetails(); });
   $('signout-btn').addEventListener('click', signOut);
-  $('theme-btn').addEventListener('click', toggleTheme);
-  $('theme-btn-mobile').addEventListener('click', toggleTheme);
+  $('theme-light-btn').addEventListener('click', () => setTheme('light'));
+  $('theme-dark-btn').addEventListener('click', () => setTheme('dark'));
   $('refresh-foryou-btn').addEventListener('click', renderForYou);
   $('search-btn').addEventListener('click', () => runSearch());
   $('clear-search-btn').addEventListener('click', () => {
@@ -1766,6 +1824,7 @@ function bindEvents() {
   $('export-csv-btn').addEventListener('click', exportRecommendations);
   document.querySelectorAll('#sl-budget, #sl-popularity, #sl-runtime, #sl-vote, #sl-count').forEach((input) => input.addEventListener('input', renderRevenue));
   $('save-profile-btn').addEventListener('click', saveProfileInterests);
+  $('save-user-btn').addEventListener('click', saveUserProfile);
   $('contact-btn').addEventListener('click', sendContactMessage);
   $('tour-start-btn').addEventListener('click', startTour);
   $('tour-prev-btn').addEventListener('click', () => { if (activeTourStep > 0) runTourStep(activeTourStep - 1); });
@@ -1773,6 +1832,7 @@ function bindEvents() {
   $('tour-skip-btn').addEventListener('click', () => endTour(true));
   $('tour-dismiss-btn').addEventListener('click', () => { store.onboardingDismissed = true; persistStore(); maybeShowTour(); });
   window.addEventListener('resize', () => window.setTimeout(notifyFrameHeight, 30));
+  document.addEventListener('load', (event) => { if (event.target && event.target.tagName === 'IMG') window.setTimeout(notifyFrameHeight, 30); }, true);
   if (window.ResizeObserver) {
     const observer = new ResizeObserver(() => window.requestAnimationFrame(notifyFrameHeight));
     observer.observe(document.body);
