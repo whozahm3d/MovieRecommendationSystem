@@ -141,11 +141,12 @@ div[aria-selected="true"] { color: #d6c3a5 !important; border-bottom: 2px solid 
 .poster-frame { background: linear-gradient(180deg, #202633 0%, #141821 100%); border: 1px solid #2c3342; border-radius: 14px; overflow: hidden; aspect-ratio: 2 / 3; display:flex; align-items:center; justify-content:center; }
 .poster-frame img { width: 100%; height: 100%; object-fit: cover; display:block; }
 .poster-fallback { display:none; width:100%; height:100%; align-items:center; justify-content:center; color:#d6c3a5; text-align:center; padding:16px; font-size:12px; letter-spacing:.08em; text-transform:uppercase; background: linear-gradient(180deg, #1d2230 0%, #131720 100%); }
-.detail-panel { background: linear-gradient(135deg, rgba(20,26,37,0.98), rgba(83,43,51,0.78)); border:1px solid rgba(214,195,165,.22); border-radius:16px; padding:22px 24px; margin-bottom:20px; box-shadow:0 20px 36px rgba(0,0,0,.2); }
+.detail-panel { background: linear-gradient(135deg, rgba(20,26,37,0.98), rgba(83,43,51,0.78)); border:1px solid rgba(214,195,165,.22); border-radius:16px; padding:22px 24px; margin-bottom:10px; box-shadow:0 20px 36px rgba(0,0,0,.2); }
 .detail-meta { color:#adb7c8; font-size:12px; margin:0 0 14px 0; }
 .detail-overview { color:#edf1f7; font-size:14px; line-height:1.65; }
 .detail-badges { display:flex; flex-wrap:wrap; gap:8px; margin-top:16px; }
 .detail-badge { display:inline-block; margin:0; padding:6px 10px; border-radius:999px; background:rgba(214,195,165,.12); border:1px solid rgba(214,195,165,.2); color:#f2e9dd; font-size:11px; }
+.compact-poster { max-width: 320px; margin: 0 auto; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -319,12 +320,13 @@ def fetch_poster(title: str = "", movie=None, df=None) -> str:
     return FALLBACK_POSTER
 
 
-def render_poster(title: str, poster_url: str, caption: str | None = None):
+def render_poster(title: str, poster_url: str, caption: str | None = None, compact: bool = False):
     escaped_title = quote_plus(title or "Poster unavailable")
     fallback_url = f"https://placehold.co/600x900/151922/D6C3A5?text={escaped_title}"
+    wrapper_class = "poster-frame compact-poster" if compact else "poster-frame"
     st.markdown(
         f"""
-        <div class="poster-frame">
+        <div class="{wrapper_class}">
           <img src="{poster_url}" alt="{title}" onerror="this.onerror=null; this.src='{fallback_url}';" />
           <div class="poster-fallback">Poster unavailable</div>
         </div>
@@ -429,7 +431,7 @@ def render_movie_details(df):
 
     col_poster, col_details = st.columns([1, 2.1])
     with col_poster:
-        render_poster(selected_movie.get("title", ""), poster_url)
+        render_poster(selected_movie.get("title", ""), poster_url, compact=True)
 
     with col_details:
         st.markdown('<div class="detail-panel">', unsafe_allow_html=True)
@@ -453,15 +455,18 @@ def render_movie_details(df):
         if badge_parts:
             st.markdown(f'<div class="detail-badges">{"".join(badge_parts)}</div>', unsafe_allow_html=True)
 
-        col_actions = st.columns([1, 1, 1])
-        with col_actions[0]:
+        action_columns = st.columns(3 if homepage else 2)
+        with action_columns[0]:
             if st.button("Mark as Watched", key=f"detail_watch_{selected_movie['id']}", use_container_width=True):
                 mark_watched(int(selected_movie["id"]), selected_movie.get("title", ""), genres)
                 st.rerun()
-        with col_actions[1]:
-            if homepage:
+        if homepage:
+            with action_columns[1]:
                 st.link_button("Official Page", homepage, use_container_width=True)
-        with col_actions[2]:
+            clear_button_column = action_columns[2]
+        else:
+            clear_button_column = action_columns[1]
+        with clear_button_column:
             if st.button("Clear Selection", key=f"detail_clear_{selected_movie['id']}", use_container_width=True):
                 st.session_state.selected_movie_id = None
                 st.rerun()
