@@ -1,4 +1,5 @@
 from pathlib import Path
+import json
 
 import streamlit as st
 import streamlit.components.v1 as components
@@ -35,5 +36,8 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-html_path = Path(__file__).parent / "ui" / "cinema_to_watch.html"
-components.html(html_path.read_text(encoding="utf-8"), height=3200, scrolling=True)
+base_path = Path(__file__).parent
+html_template = (base_path / "ui" / "cinema_to_watch.html").read_text(encoding="utf-8")
+movie_snapshot = json.loads((base_path / "ui" / "movie_snapshot.json").read_text(encoding="utf-8"))
+html = html_template.replace("__MOVIE_DATA__", json.dumps(movie_snapshot, ensure_ascii=False))
+components.html(html, height=4600, scrolling=True)
