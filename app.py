@@ -43,6 +43,7 @@ SMTP_PASSWORD = os.getenv("SMTP_PASSWORD", "")
 TMDB_API_KEY  = os.getenv("TMDB_API_KEY",  "")
 GOOGLE_CLIENT_ID     = os.getenv("GOOGLE_CLIENT_ID",     "")
 GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET", "")
+ALLOW_DEV_EMAIL_VERIFICATION = os.getenv("ALLOW_DEV_EMAIL_VERIFICATION", "0") == "1"
 
 # ─── CONSTANTS ─────────────────────────────────────────────────
 PORTFOLIO_MODE = os.getenv("PORTFOLIO_MODE", "0") == "1"
@@ -120,7 +121,8 @@ div[aria-selected="true"] { color: #d6c3a5 !important; border-bottom: 2px solid 
 .detail-panel { background: linear-gradient(135deg, rgba(20,26,37,0.98), rgba(83,43,51,0.78)); border:1px solid rgba(214,195,165,.22); border-radius:16px; padding:22px 24px; margin-bottom:20px; box-shadow:0 20px 36px rgba(0,0,0,.2); }
 .detail-meta { color:#adb7c8; font-size:12px; margin:0 0 14px 0; }
 .detail-overview { color:#edf1f7; font-size:14px; line-height:1.65; }
-.detail-badge { display:inline-block; margin:0 8px 8px 0; padding:6px 10px; border-radius:999px; background:rgba(214,195,165,.12); border:1px solid rgba(214,195,165,.2); color:#f2e9dd; font-size:11px; }
+.detail-badges { display:flex; flex-wrap:wrap; gap:8px; margin-top:16px; }
+.detail-badge { display:inline-block; margin:0; padding:6px 10px; border-radius:999px; background:rgba(214,195,165,.12); border:1px solid rgba(214,195,165,.2); color:#f2e9dd; font-size:11px; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -161,9 +163,11 @@ def generate_code():
 def send_verification_email(to_email: str, code: str) -> bool:
     """Send 6-digit code via SMTP. Returns True on success."""
     if not SMTP_EMAIL or not SMTP_PASSWORD:
-        # Dev mode — print to terminal only
-        print(f"\n[DEV MODE] Verification code for {to_email}: {code}\n")
-        return True
+        if ALLOW_DEV_EMAIL_VERIFICATION:
+            print(f"\n[DEV MODE] Verification code for {to_email}: {code}\n")
+            return True
+        st.error("Email verification is not configured. Add SMTP_EMAIL and SMTP_PASSWORD to enable real verification emails.")
+        return False
     try:
         msg = MIMEMultipart("alternative")
         msg["Subject"] = "Cinema to Watch — Your verification code"
@@ -349,15 +353,16 @@ def render_movie_details(df):
             f'<div class="detail-overview">{selected_movie.get("overview", "Overview not available.")}</div>',
             unsafe_allow_html=True,
         )
-        st.markdown('<div style="margin-top:16px">', unsafe_allow_html=True)
         badges = genres[:5] + [f"Budget {format_currency(selected_movie.get('budget'))}", f"Revenue {format_currency(selected_movie.get('revenue'))}"]
+        badge_parts = []
         for badge in badges:
             if badge and badge != "Budget Not available" and badge != "Revenue Not available":
-                st.markdown(f'<span class="detail-badge">{badge}</span>', unsafe_allow_html=True)
+                badge_parts.append(f'<span class="detail-badge">{badge}</span>')
         if keywords:
             for keyword in keywords[:5]:
-                st.markdown(f'<span class="detail-badge">{keyword}</span>', unsafe_allow_html=True)
-        st.markdown("</div>", unsafe_allow_html=True)
+                badge_parts.append(f'<span class="detail-badge">{keyword}</span>')
+        if badge_parts:
+            st.markdown(f'<div class="detail-badges">{"".join(badge_parts)}</div>', unsafe_allow_html=True)
 
         col_actions = st.columns([1, 1, 1])
         with col_actions[0]:
@@ -422,14 +427,10 @@ def mark_watched(movie_id: int, title: str, genres: list):
 #  AUTH PAGES
 # ══════════════════════════════════════════════════════════════
 def page_auth():
-    st.markdown("""
-    <div style="display:flex;align-items:center;justify-content:center;min-height:80vh">
-    </div>""", unsafe_allow_html=True)
-
-    col1, col2, col3 = st.columns([1, 1.4, 1])
+    col1, col2, col3 = st.columns([1, 1.2, 1])
     with col2:
-        st.markdown('<div class="page-title" style="color:#e0a84b;text-align:center;font-size:32px;letter-spacing:3px">Cinema to Watch</div>', unsafe_allow_html=True)
-        st.markdown('<div class="page-sub" style="text-align:center;margin-bottom:28px">ML-powered movie recommendations</div>', unsafe_allow_html=True)
+        st.markdown('<div class="page-title" style="color:#d6c3a5;text-align:center;font-size:32px;letter-spacing:3px;margin-top:8px">Cinema to Watch</div>', unsafe_allow_html=True)
+        st.markdown('<div class="page-sub" style="text-align:center;margin-bottom:18px">ML-powered movie recommendations</div>', unsafe_allow_html=True)
 
         step = st.session_state.auth_step
 
@@ -480,8 +481,8 @@ def page_auth():
                     send_verification_email(email, new_code)
                     st.success("New code sent!")
 
-            if not SMTP_EMAIL:
-                st.caption("Development mode: check the terminal for the code. Set SMTP_EMAIL in .env for real emails.")
+            if ALLOW_DEV_EMAIL_VERIFICATION and not SMTP_EMAIL:
+                st.caption("Development override is enabled, so the verification code is printed in the terminal.")
             return
 
         # ── INTERESTS ───────────────────────────────────────
@@ -559,6 +560,8 @@ def page_auth():
                     st.error("Please fill in all fields. Password must be at least 8 characters.")
             st.divider()
             st.caption("Create an account, verify your email, and then personalise your recommendations.")
+            if not SMTP_EMAIL and not ALLOW_DEV_EMAIL_VERIFICATION:
+                st.caption("SMTP credentials are required for real email verification in this environment.")
             st.caption("Google sign-up can be added later through OAuth configuration if needed.")
 
 
