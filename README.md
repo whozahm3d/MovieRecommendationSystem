@@ -8,12 +8,6 @@
 A **production-style movie discovery system** built on the TMDB 5000 dataset.  
 This project combines **machine learning, product design, and deployment practices** into a single portfolio-ready application.
 
----
-
-## 🚀 Live Demo
-*(Add your Streamlit link here after deployment)*
-
----
 
 ## 📌 Overview
 
@@ -190,10 +184,3 @@ This project is licensed under the MIT License.
 ```
 If you found this project helpful, consider giving it a ⭐ on GitHub!
 ```
-
----
-
-If you want next upgrade, I can:
-- Add **real screenshots section (huge impact)**
-- Write **perfect CV entry for this project**
-- Help you **deploy and get a live link (very important)**
