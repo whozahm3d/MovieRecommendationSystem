@@ -1,0 +1,1744 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cinema to Watch</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #090b10;
+  --bg2: #11141c;
+  --bg3: #171b24;
+  --panel: #121620;
+  --panel-soft: #161b26;
+  --border: #252b37;
+  --text: #f1ede5;
+  --muted: #99a3b3;
+  --muted2: #6f7888;
+  --gold: #d6c3a5;
+  --gold2: #e0a84b;
+  --accent: #8f6b45;
+  --success: #73c58a;
+  --danger: #e08f8f;
+  --shadow: 0 18px 40px rgba(0, 0, 0, 0.24);
+}
+
+body.light {
+  --bg: #f4efe7;
+  --bg2: #ffffff;
+  --bg3: #f7f2ea;
+  --panel: #ffffff;
+  --panel-soft: #f8f3eb;
+  --border: #ddd1c1;
+  --text: #18171b;
+  --muted: #625d58;
+  --muted2: #897f74;
+  --gold: #7c5a34;
+  --gold2: #af7a31;
+  --accent: #8f6b45;
+  --success: #297245;
+  --danger: #a63d3d;
+  --shadow: 0 16px 34px rgba(89, 67, 36, 0.12);
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; min-height: 100%; }
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: radial-gradient(circle at top left, rgba(143,107,69,0.18), transparent 26%), var(--bg);
+  color: var(--text);
+  overflow-x: hidden;
+}
+button, input, textarea { font: inherit; }
+a { color: inherit; }
+.hidden { display: none !important; }
+.muted { color: var(--muted); }
+.empty-state {
+  border: 1px dashed var(--border);
+  border-radius: 16px;
+  padding: 24px;
+  text-align: center;
+  color: var(--muted);
+  background: rgba(214,195,165,0.04);
+}
+.empty-state strong { display: block; color: var(--gold2); margin-bottom: 8px; }
+
+#splash {
+  position: fixed; inset: 0; z-index: 99999;
+  display: none; align-items: center; justify-content: center; flex-direction: column; gap: 14px;
+  background: var(--bg);
+}
+#splash.show { display: flex; }
+.splash-ring {
+  width: 86px; height: 86px; border-radius: 50%; border: 3px solid var(--gold2);
+  display: flex; align-items: center; justify-content: center;
+  animation: ring-pop .45s ease both;
+}
+.splash-title { font-family: 'Bebas Neue', sans-serif; font-size: 32px; letter-spacing: 2px; }
+
+#auth-overlay {
+  position: fixed; inset: 0; z-index: 1000; display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(340px, 470px);
+  background: var(--bg);
+}
+.auth-left {
+  position: relative; padding: 42px 48px; overflow: hidden;
+  background: linear-gradient(160deg, #0a0d13 0%, #090b10 100%);
+}
+body.light .auth-left { background: linear-gradient(160deg, #efe6da 0%, #f4efe7 100%); }
+.auth-left::before {
+  content: ""; position: absolute; inset: 0;
+  background:
+    radial-gradient(circle at 20% 20%, rgba(145, 61, 72, 0.45), transparent 34%),
+    radial-gradient(circle at 80% 70%, rgba(47, 82, 135, 0.25), transparent 34%);
+  opacity: 0.95;
+}
+.poster-wall {
+  position: absolute; inset: 0; display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px;
+  transform: rotate(-6deg) scale(1.14); opacity: 0.2; filter: blur(1px) saturate(0.7);
+  padding: 12px;
+}
+.poster-wall img { width: 100%; height: 100%; object-fit: cover; border-radius: 8px; }
+.auth-left-content { position: relative; z-index: 1; max-width: 420px; margin-top: auto; }
+.hero-mark { font-family: 'Bebas Neue', sans-serif; font-size: 24px; letter-spacing: 3px; color: var(--gold2); }
+.auth-headline { font-family: 'Bebas Neue', sans-serif; font-size: 60px; line-height: 0.95; margin: 16px 0 14px; }
+.auth-headline span { color: var(--gold2); }
+.auth-copy { color: var(--muted); line-height: 1.7; margin-bottom: 22px; }
+.feature-list { display: grid; gap: 10px; }
+.feature-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 11px 13px; background: rgba(0,0,0,0.22); border: 1px solid rgba(255,255,255,0.06); border-radius: 12px;
+}
+body.light .feature-item { background: rgba(255,255,255,0.55); border-color: rgba(124, 90, 52, 0.08); }
+.feature-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--gold2); flex-shrink: 0; }
+.auth-right {
+  background: linear-gradient(180deg, var(--bg2) 0%, var(--panel) 100%);
+  border-left: 1px solid rgba(255,255,255,0.05);
+  padding: 36px 42px 24px;
+  overflow-y: auto;
+}
+.auth-step { display: none; }
+.auth-step.active { display: block; animation: fade-up .25s ease; }
+.step-progress { display: flex; align-items: center; gap: 10px; margin-bottom: 26px; }
+.step-node {
+  width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  border: 1.5px solid var(--border); color: var(--muted2); font-weight: 700; font-size: 12px;
+}
+.step-node.done, .step-node.active { border-color: var(--gold2); }
+.step-node.done { background: var(--gold2); color: #120f0b; }
+.step-line { flex: 1; height: 2px; background: var(--border); }
+.step-line.done { background: var(--gold2); }
+.section-logo { font-family: 'Bebas Neue', sans-serif; color: var(--gold2); letter-spacing: 2px; font-size: 12px; }
+.section-title { font-family: 'Bebas Neue', sans-serif; font-size: 30px; letter-spacing: 1px; margin: 4px 0 6px; }
+.section-sub { color: var(--muted); line-height: 1.6; margin-bottom: 20px; }
+.auth-tabs { display: flex; border-bottom: 1px solid var(--border); margin-bottom: 18px; }
+.auth-tab {
+  flex: 1; background: transparent; border: none; color: var(--muted2); padding: 12px 0;
+  border-bottom: 2px solid transparent; cursor: pointer; font-weight: 700;
+}
+.auth-tab.active { color: var(--gold2); border-bottom-color: var(--gold2); }
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+.field-group { margin-bottom: 14px; }
+.field-label {
+  display: flex; align-items: center; justify-content: space-between;
+  font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted);
+  margin-bottom: 6px; font-weight: 700;
+}
+.field-help { margin-top: 6px; font-size: 11px; color: var(--muted2); }
+.field-help.ok { color: var(--success); }
+.field-help.err { color: var(--danger); }
+.input-wrap { position: relative; }
+.input {
+  width: 100%; padding: 13px 15px; border-radius: 12px; color: var(--text); background: var(--panel-soft);
+  border: 1.5px solid var(--border); outline: none; transition: border-color .18s ease, box-shadow .18s ease;
+}
+.input:focus, textarea:focus { border-color: var(--gold2); box-shadow: 0 0 0 3px rgba(224,168,75,0.12); }
+.input.ok { border-color: rgba(115,197,138,0.75); }
+.input.bad { border-color: rgba(224,143,143,0.75); }
+.pw-toggle {
+  position: absolute; top: 50%; right: 12px; transform: translateY(-50%);
+  border: none; background: transparent; color: var(--muted2); cursor: pointer;
+}
+.checkbox-row { display: flex; align-items: flex-start; gap: 10px; margin: 13px 0 18px; }
+.checkbox-row input { margin-top: 3px; accent-color: var(--gold2); }
+.btn-primary, .btn-secondary, .ghost-btn, .icon-btn {
+  border: none; cursor: pointer; transition: transform .18s ease, filter .18s ease, background .18s ease;
+}
+.btn-primary {
+  width: 100%; padding: 14px 16px; border-radius: 12px; color: #fbf6ef;
+  background: linear-gradient(135deg, var(--accent) 0%, var(--gold2) 100%);
+  font-weight: 700; box-shadow: var(--shadow);
+}
+.btn-primary:hover:not(:disabled), .ghost-btn:hover, .icon-btn:hover { transform: translateY(-1px); filter: brightness(1.05); }
+.btn-primary:disabled { opacity: 0.45; cursor: not-allowed; }
+.btn-secondary {
+  width: 100%; margin-top: 10px; padding: 12px; border-radius: 12px;
+  background: transparent; color: var(--muted); border: 1.5px solid var(--border); font-weight: 700;
+}
+.icon-btn, .ghost-btn {
+  padding: 10px 12px; border-radius: 10px; color: var(--text);
+  background: rgba(214,195,165,0.08); border: 1px solid rgba(214,195,165,0.16);
+}
+.icon-btn.small { padding: 8px 10px; font-size: 12px; }
+.alert {
+  display: none; border-radius: 10px; padding: 11px 13px; margin-bottom: 14px;
+  font-size: 12px; background: rgba(80,30,30,.45); border: 1px solid rgba(160,60,60,.4); color: #f3b2b2;
+}
+.dev-box {
+  border-radius: 12px; padding: 12px 14px; margin-top: 14px;
+  background: rgba(54, 88, 128, 0.16); border: 1px solid rgba(75, 124, 181, 0.25);
+}
+.dev-code { font-family: 'Bebas Neue', sans-serif; font-size: 30px; letter-spacing: 8px; color: var(--gold2); }
+.otp-row { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; margin: 18px 0; }
+.otp-box {
+  width: 100%; padding: 16px 0; border-radius: 12px; border: 1.5px solid var(--border);
+  background: var(--panel-soft); text-align: center; color: var(--gold2); font-size: 24px; font-weight: 700;
+}
+.genre-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 14px 0 18px; }
+.genre-chip, .genre-pill {
+  padding: 10px 9px; border-radius: 12px; border: 1.5px solid var(--border);
+  background: var(--panel-soft); color: var(--muted); cursor: pointer; text-align: center; font-weight: 600;
+}
+.genre-chip.selected, .genre-pill.selected { border-color: var(--gold2); color: var(--gold2); background: rgba(224,168,75,0.1); }
+.auth-footer { color: var(--muted2); font-size: 11px; text-align: center; margin-top: 24px; }
+
+#app { display: none; min-height: 100vh; }
+#app.visible { display: block; animation: fade-up .3s ease; }
+.mobile-bar {
+  display: none; position: sticky; top: 0; z-index: 45; align-items: center; justify-content: space-between;
+  padding: 16px 18px; backdrop-filter: blur(12px); background: rgba(9,11,16,0.82); border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+body.light .mobile-bar { background: rgba(244,239,231,0.9); }
+.mobile-brand { font-family: 'Bebas Neue', sans-serif; font-size: 24px; letter-spacing: 2px; }
+.layout { display: flex; min-height: 100vh; }
+#sidebar-backdrop {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 70; display: none;
+}
+#sidebar-backdrop.show { display: block; }
+.sidebar {
+  width: 240px; min-height: 100vh; padding: 24px 14px; position: fixed; inset: 0 auto 0 0; z-index: 80;
+  background: linear-gradient(180deg, var(--bg3) 0%, var(--panel) 100%); border-right: 1px solid var(--border);
+  display: flex; flex-direction: column; gap: 10px;
+}
+.brand { padding: 6px 10px 14px; }
+.brand-title { font-family: 'Bebas Neue', sans-serif; font-size: 24px; letter-spacing: 2px; color: var(--gold2); }
+.brand-sub { font-size: 11px; color: var(--muted2); }
+.nav-group { display: grid; gap: 6px; }
+.nav-btn {
+  width: 100%; border: none; border-radius: 10px; text-align: left; padding: 11px 14px;
+  color: var(--muted); background: transparent; cursor: pointer; font-weight: 600;
+}
+.nav-btn:hover, .nav-btn.active { color: var(--gold2); background: rgba(214,195,165,0.12); }
+.sidebar-footer {
+  margin-top: auto; padding: 12px; border-radius: 14px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05);
+}
+.user-name { font-weight: 700; }
+.user-email { font-size: 11px; color: var(--muted2); margin-top: 2px; }
+.sidebar-actions { display: flex; gap: 8px; margin-top: 10px; }
+.sidebar-actions button { flex: 1; }
+.main {
+  flex: 1; margin-left: 240px; padding: 28px 32px 40px;
+}
+.page { display: none; }
+.page.active { display: block; animation: fade-up .25s ease; }
+.page-title { font-family: 'Bebas Neue', sans-serif; font-size: 36px; letter-spacing: 1px; margin: 0 0 4px; }
+.page-sub { color: var(--muted); margin: 0 0 22px; }
+.section-header {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px;
+}
+.section-header h3, .section-title-sm {
+  margin: 0; font-size: 13px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted);
+}
+.hero-banner, .panel, .metric-card, .movie-card, .detail-panel, .chart-card, .info-box, .contact-card, .tour-card {
+  background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));
+  border: 1px solid var(--border); border-radius: 18px; box-shadow: var(--shadow);
+}
+body.light .hero-banner,
+body.light .panel,
+body.light .metric-card,
+body.light .movie-card,
+body.light .detail-panel,
+body.light .chart-card,
+body.light .info-box,
+body.light .contact-card,
+body.light .tour-card { background: linear-gradient(180deg, rgba(255,255,255,0.96), rgba(247,242,234,0.96)); }
+.hero-banner {
+  padding: 28px 30px; margin-bottom: 22px;
+  background: linear-gradient(120deg, rgba(92,42,48,.92) 0%, rgba(34,41,56,.92) 46%, rgba(12,15,22,.98) 100%);
+}
+body.light .hero-banner { background: linear-gradient(120deg, rgba(219,199,177,.95) 0%, rgba(241,234,222,.98) 100%); }
+.hero-chip, .tag {
+  display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px;
+  border: 1px solid rgba(214,195,165,0.26); background: rgba(214,195,165,0.12); color: var(--gold2); font-size: 11px; font-weight: 700;
+}
+.hero-title { font-family: 'Bebas Neue', sans-serif; font-size: 54px; line-height: 0.95; margin: 10px 0 10px; }
+.hero-tagline { color: var(--gold); font-style: italic; margin-bottom: 8px; }
+.metric-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 22px; }
+.metric-card { padding: 18px; text-align: center; }
+.metric-value { font-family: 'Bebas Neue', sans-serif; font-size: 34px; letter-spacing: 1px; color: var(--gold2); }
+.metric-label { color: var(--muted2); text-transform: uppercase; letter-spacing: 0.12em; font-size: 10px; }
+.panel, .info-box, .chart-card, .contact-card, .detail-panel { padding: 20px; }
+.detail-panel { display: none; gap: 20px; grid-template-columns: 190px 1fr; margin-bottom: 22px; }
+.detail-panel.visible { display: grid; }
+.poster-frame {
+  aspect-ratio: 2 / 3; border-radius: 14px; overflow: hidden; background: linear-gradient(180deg, #222838 0%, #161b27 100%);
+  border: 1px solid rgba(255,255,255,0.08); display: flex; align-items: center; justify-content: center;
+}
+body.light .poster-frame { background: linear-gradient(180deg, #e7dccf 0%, #f7f1e8 100%); border-color: rgba(124,90,52,0.12); }
+.poster-frame img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.movie-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 14px; }
+.movie-grid.compact { grid-template-columns: repeat(8, minmax(0, 1fr)); }
+.movie-card { padding: 12px; }
+.movie-title { font-weight: 700; margin: 10px 0 4px; }
+.movie-meta { color: var(--muted); font-size: 12px; min-height: 34px; }
+.movie-actions { display: flex; gap: 8px; margin-top: 10px; }
+.movie-actions button { flex: 1; }
+.search-row, .toolbar-row { display: flex; gap: 10px; align-items: center; }
+.search-input, textarea {
+  width: 100%; padding: 13px 14px; border-radius: 12px; border: 1.5px solid var(--border);
+  background: var(--panel-soft); color: var(--text); outline: none;
+}
+.pill-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.taste-copy { color: var(--muted); line-height: 1.6; }
+.two-col { display: grid; grid-template-columns: 1.2fr 1fr; gap: 18px; }
+.profile-grid, .contact-grid { display: grid; grid-template-columns: 1fr 1.4fr; gap: 18px; }
+.tab-bar { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+.tab-btn {
+  padding: 10px 14px; border-radius: 10px; border: 1px solid var(--border); background: transparent; color: var(--muted2); cursor: pointer; font-weight: 600;
+}
+.tab-btn.active { color: var(--gold2); border-color: var(--gold2); background: rgba(214,195,165,0.1); }
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+.activity-row {
+  display: grid; grid-template-columns: 60px 1fr auto auto; align-items: center; gap: 12px;
+  padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+body.light .activity-row { border-bottom-color: rgba(124,90,52,0.08); }
+.mini-poster { width: 60px; height: 88px; border-radius: 10px; overflow: hidden; background: var(--panel-soft); }
+.mini-poster img { width: 100%; height: 100%; object-fit: cover; }
+.bar-chart { display: grid; gap: 10px; }
+.bar-row { display: grid; grid-template-columns: 100px 1fr 48px; align-items: center; gap: 10px; }
+.bar-label { color: var(--muted); font-size: 12px; text-align: right; }
+.bar-track { height: 14px; border-radius: 999px; overflow: hidden; background: rgba(255,255,255,0.06); }
+body.light .bar-track { background: rgba(124,90,52,0.12); }
+.bar-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--gold2)); }
+.range-group { margin-bottom: 14px; }
+.range-label { display: flex; justify-content: space-between; color: var(--muted); font-size: 12px; margin-bottom: 6px; }
+input[type="range"] { width: 100%; accent-color: var(--gold2); }
+.prediction-card { text-align: center; margin-top: 18px; }
+.prediction-amount { font-family: 'Bebas Neue', sans-serif; font-size: 50px; color: var(--gold2); letter-spacing: 1px; }
+.contact-card + .contact-card { margin-top: 12px; }
+.success-msg, .error-msg {
+  display: none; margin-top: 10px; border-radius: 10px; padding: 10px 12px; font-size: 13px;
+}
+.success-msg { background: rgba(40,80,50,0.32); border: 1px solid rgba(60,140,80,0.32); color: var(--success); }
+.error-msg { background: rgba(80,30,30,0.32); border: 1px solid rgba(160,60,60,0.3); color: var(--danger); }
+.tour-card { padding: 16px; margin-bottom: 18px; }
+.tour-step { display: none; }
+.tour-step.active { display: block; }
+.skeleton-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 14px; }
+.skeleton-card {
+  height: 280px; border-radius: 18px; position: relative; overflow: hidden;
+  background: rgba(255,255,255,0.05); border: 1px solid var(--border);
+}
+.skeleton-card::after {
+  content: ""; position: absolute; inset: 0; transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.14), transparent);
+  animation: shimmer 1.2s infinite;
+}
+
+@media (max-width: 1180px) {
+  .movie-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .movie-grid.compact, .metric-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+
+@media (max-width: 980px) {
+  #auth-overlay { grid-template-columns: 1fr; }
+  .auth-left { min-height: 42vh; }
+  .auth-right { border-left: none; border-top: 1px solid rgba(255,255,255,0.05); }
+  .mobile-bar { display: flex; }
+  .sidebar {
+    transform: translateX(-100%); transition: transform .25s ease;
+    width: min(82vw, 300px);
+  }
+  .sidebar.open { transform: translateX(0); }
+  .main { margin-left: 0; padding: 22px 18px 34px; }
+  .layout { display: block; }
+  .detail-panel, .two-col, .profile-grid, .contact-grid { grid-template-columns: 1fr; }
+  .movie-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .movie-grid.compact { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .metric-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .genre-grid { grid-template-columns: repeat(2, 1fr); }
+  .search-row, .toolbar-row, .sidebar-actions { flex-wrap: wrap; }
+  .activity-row { grid-template-columns: 52px 1fr; }
+  .activity-row > :nth-child(3), .activity-row > :nth-child(4) { justify-self: start; }
+  .bar-row { grid-template-columns: 80px 1fr 38px; }
+  .skeleton-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 640px) {
+  .auth-left { padding: 26px 20px; }
+  .auth-right { padding: 28px 18px 22px; }
+  .auth-headline { font-size: 44px; }
+  .page-title { font-size: 30px; }
+  .hero-title { font-size: 42px; }
+  .movie-grid, .movie-grid.compact, .metric-grid, .genre-grid, .otp-row, .skeleton-grid { grid-template-columns: 1fr; }
+  .detail-panel { padding: 16px; }
+}
+
+@keyframes shimmer { 100% { transform: translateX(100%); } }
+@keyframes fade-up { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes ring-pop { from { opacity: 0; transform: scale(0.8); } to { opacity: 1; transform: scale(1); } }
+</style>
+</head>
+<body>
+<div id="splash">
+  <div class="splash-ring">🎬</div>
+  <div class="splash-title">Cinema to Watch</div>
+  <div class="muted">Loading your movie profile…</div>
+</div>
+
+<div id="auth-overlay">
+  <section class="auth-left">
+    <div class="poster-wall" id="poster-wall"></div>
+    <div class="auth-left-content">
+      <div class="hero-mark">Cinema to Watch</div>
+      <div class="auth-headline">A richer <span>movie demo</span><br>for your portfolio.</div>
+      <p class="auth-copy">Explore a bundled TMDB snapshot, save your history locally, and try real browser-side similarity search with a responsive, shareable interface.</p>
+      <div class="feature-list">
+        <div class="feature-item"><span class="feature-dot"></span><span>120 bundled TMDB movies with real metadata and overviews.</span></div>
+        <div class="feature-item"><span class="feature-dot"></span><span>Accounts, interests, watch history, and theme persist with localStorage.</span></div>
+        <div class="feature-item"><span class="feature-dot"></span><span>Recommendations use client-side TF‑IDF + cosine similarity instead of random scores.</span></div>
+      </div>
+    </div>
+  </section>
+
+  <aside class="auth-right">
+    <div id="step-auth" class="auth-step active">
+      <div class="section-logo">Cinema to Watch</div>
+      <div class="section-title">Sign in or create an account</div>
+      <p class="section-sub">Your preferences and activity will survive a browser refresh so evaluators can try the app like a real product.</p>
+
+      <div class="auth-tabs">
+        <button class="auth-tab active" data-auth-tab="login">Login</button>
+        <button class="auth-tab" data-auth-tab="signup">Sign up</button>
+      </div>
+
+      <div id="auth-login" class="tab-panel active">
+        <div class="alert" id="login-alert"></div>
+        <div class="field-group">
+          <label class="field-label" for="li-email">Email</label>
+          <input class="input" id="li-email" type="email" placeholder="you@example.com">
+        </div>
+        <div class="field-group">
+          <label class="field-label" for="li-pass">Password</label>
+          <div class="input-wrap">
+            <input class="input" id="li-pass" type="password" placeholder="Enter your password">
+            <button class="pw-toggle" type="button" data-toggle="li-pass">👁</button>
+          </div>
+        </div>
+        <button class="btn-primary" id="login-btn" type="button">Continue</button>
+        <button class="btn-secondary" id="guest-btn" type="button">Enter demo as guest</button>
+      </div>
+
+      <div id="auth-signup" class="tab-panel">
+        <div class="alert" id="signup-alert"></div>
+        <div class="field-group">
+          <label class="field-label" for="su-name">Full name</label>
+          <input class="input" id="su-name" type="text" placeholder="Jamie Chen">
+          <div class="field-help" id="su-name-help"></div>
+        </div>
+        <div class="field-group">
+          <label class="field-label" for="su-email">Email</label>
+          <input class="input" id="su-email" type="email" placeholder="jamie@example.com">
+          <div class="field-help" id="su-email-help"></div>
+        </div>
+        <div class="field-group">
+          <label class="field-label" for="su-pass">Password</label>
+          <div class="input-wrap">
+            <input class="input" id="su-pass" type="password" placeholder="Minimum 8 characters">
+            <button class="pw-toggle" type="button" data-toggle="su-pass">👁</button>
+          </div>
+        </div>
+        <div class="field-group">
+          <label class="field-label" for="su-pass2">Confirm password</label>
+          <div class="input-wrap">
+            <input class="input" id="su-pass2" type="password" placeholder="Repeat your password">
+            <button class="pw-toggle" type="button" data-toggle="su-pass2">👁</button>
+          </div>
+          <div class="field-help" id="su-pass-help"></div>
+        </div>
+        <label class="checkbox-row"><input id="terms" type="checkbox"><span class="muted">I agree to the demo terms and want my preferences stored in this browser.</span></label>
+        <button class="btn-primary" id="signup-btn" type="button">Create account</button>
+      </div>
+    </div>
+
+    <div id="step-verify" class="auth-step">
+      <div class="step-progress">
+        <div class="step-node done">✓</div><div class="step-line done"></div>
+        <div class="step-node active">2</div><div class="step-line"></div>
+        <div class="step-node">3</div>
+      </div>
+      <div class="section-logo">Verify email</div>
+      <div class="section-title">One more step</div>
+      <p class="section-sub">A demo verification code was generated for <strong id="verify-email"></strong>. It is stored locally so reloading this page will not lose your signup progress.</p>
+      <div class="alert" id="verify-alert"></div>
+      <div class="otp-row" id="otp-row"></div>
+      <button class="btn-primary" id="verify-btn" type="button">Verify &amp; continue</button>
+      <button class="btn-secondary" id="verify-back-btn" type="button">Back</button>
+      <div class="dev-box">
+        <div class="muted" style="font-size:11px;text-transform:uppercase;letter-spacing:.08em">Demo code</div>
+        <div class="dev-code" id="dev-code">000000</div>
+        <div class="muted" style="font-size:11px">In production this would be delivered by email.</div>
+      </div>
+    </div>
+
+    <div id="step-interests" class="auth-step">
+      <div class="step-progress">
+        <div class="step-node done">✓</div><div class="step-line done"></div>
+        <div class="step-node done">✓</div><div class="step-line done"></div>
+        <div class="step-node active">3</div>
+      </div>
+      <div class="section-logo">Personalise your feed</div>
+      <div class="section-title">Choose a few genres</div>
+      <p class="section-sub">These interests influence your home feed, “For You” page, and search defaults. You can edit them later in your profile.</p>
+      <div class="field-label" style="margin-bottom:10px">Selected genres <span id="interest-count">0</span></div>
+      <div class="genre-grid" id="interest-grid"></div>
+      <button class="btn-primary" id="interest-btn" type="button" disabled>Launch dashboard</button>
+      <button class="btn-secondary" id="interest-skip-btn" type="button">Skip for now</button>
+    </div>
+
+    <div class="auth-footer">© 2026 Cinema to Watch · Responsive portfolio demo</div>
+  </aside>
+</div>
+
+<div id="app">
+  <div class="mobile-bar">
+    <button class="icon-btn" id="menu-btn" type="button">☰</button>
+    <div class="mobile-brand">Cinema to Watch</div>
+    <button class="icon-btn" id="theme-btn-mobile" type="button">☀️</button>
+  </div>
+  <div id="sidebar-backdrop"></div>
+  <div class="layout">
+    <nav class="sidebar" id="sidebar">
+      <div class="brand">
+        <div class="brand-title">Cinema to Watch</div>
+        <div class="brand-sub">Saved locally · Real similarity search</div>
+      </div>
+      <div class="nav-group">
+        <button class="nav-btn active" data-page="home">Home</button>
+        <button class="nav-btn" data-page="foryou">For You</button>
+        <button class="nav-btn" data-page="recommendations">Recommendations</button>
+        <button class="nav-btn" data-page="history">History</button>
+        <button class="nav-btn" data-page="explore">Explore Data</button>
+        <button class="nav-btn" data-page="revenue">Revenue Predictor</button>
+        <button class="nav-btn" data-page="profile">Profile</button>
+        <button class="nav-btn" data-page="contact">Contact</button>
+      </div>
+      <div class="sidebar-footer">
+        <div class="user-name" id="sidebar-name">Portfolio Guest</div>
+        <div class="user-email" id="sidebar-email">demo@portfolio.local</div>
+        <div class="sidebar-actions">
+          <button class="ghost-btn" id="theme-btn" type="button">☀️ Theme</button>
+          <button class="ghost-btn" id="signout-btn" type="button">Sign out</button>
+        </div>
+      </div>
+    </nav>
+
+    <main class="main">
+      <section id="page-home" class="page active">
+        <div class="page-title">Home</div>
+        <p class="page-sub">A polished portfolio walkthrough with persisted state, mobile navigation, and a real bundled movie snapshot.</p>
+
+        <div class="tour-card" id="tour-card">
+          <div class="tour-step active" data-tour-step="0">
+            <strong>Quick tour — 1 of 4</strong>
+            <p class="muted">Search for a movie, mark one as watched, then refresh the page to see that your state persists.</p>
+          </div>
+          <div class="tour-step" data-tour-step="1">
+            <strong>Quick tour — 2 of 4</strong>
+            <p class="muted">Open the Recommendations page to try actual TF‑IDF + cosine similarity with the bundled TMDB snapshot.</p>
+          </div>
+          <div class="tour-step" data-tour-step="2">
+            <strong>Quick tour — 3 of 4</strong>
+            <p class="muted">Resize to mobile width to see the collapsible sidebar and responsive grids.</p>
+          </div>
+          <div class="tour-step" data-tour-step="3">
+            <strong>Quick tour — 4 of 4</strong>
+            <p class="muted">Switch themes or edit your interests in Profile to show user preference support.</p>
+          </div>
+          <div class="movie-actions">
+            <button class="ghost-btn" id="tour-next-btn" type="button">Next tip</button>
+            <button class="ghost-btn" id="tour-dismiss-btn" type="button">Dismiss</button>
+          </div>
+        </div>
+
+        <div class="detail-panel" id="detail-panel"></div>
+
+        <div class="hero-banner">
+          <div class="hero-chip" id="hero-chip">Popular now</div>
+          <div class="hero-title" id="hero-title">INTERSTELLAR</div>
+          <div class="hero-tagline" id="hero-tagline">Reach beyond the stars.</div>
+          <div class="muted" id="hero-meta">2014 · Adventure, Drama, Science Fiction · ★ 8.1</div>
+        </div>
+
+        <div class="metric-grid">
+          <div class="metric-card"><div class="metric-value" id="metric-catalog">120</div><div class="metric-label">Bundled movies</div></div>
+          <div class="metric-card"><div class="metric-value" id="metric-genres">0</div><div class="metric-label">Genres</div></div>
+          <div class="metric-card"><div class="metric-value" id="metric-rating">0.0</div><div class="metric-label">Avg rating</div></div>
+          <div class="metric-card"><div class="metric-value" id="metric-years">0–0</div><div class="metric-label">Year span</div></div>
+        </div>
+
+        <div class="section-header"><h3>Top rated in the bundled snapshot</h3><span class="muted">Based on vote average and popularity</span></div>
+        <div class="movie-grid compact" id="home-grid"></div>
+      </section>
+
+      <section id="page-foryou" class="page">
+        <div class="page-title" id="foryou-title">For You</div>
+        <p class="page-sub">Personalised recommendations update from your saved interests and watch history.</p>
+        <div class="info-box" style="margin-bottom:18px;">
+          <div class="section-header" style="margin-bottom:8px;"><h3>Your taste profile</h3><span class="tag" id="session-mode-tag">Persisted locally</span></div>
+          <div class="taste-copy" id="taste-copy"></div>
+        </div>
+        <div class="section-header"><h3>Suggested next watches</h3><button class="ghost-btn small" id="refresh-foryou-btn" type="button">Refresh picks</button></div>
+        <div class="movie-grid" id="foryou-grid"></div>
+      </section>
+
+      <section id="page-recommendations" class="page">
+        <div class="page-title">Recommendations</div>
+        <p class="page-sub">Semantic search powered by browser-side TF‑IDF and cosine similarity over the bundled movie snapshot.</p>
+        <div class="toolbar-row" style="margin-bottom:14px;">
+          <div class="hero-chip">/ focuses search</div>
+          <div class="hero-chip">Esc clears details</div>
+          <div class="hero-chip">300ms debounce</div>
+        </div>
+        <div class="search-row" style="margin-bottom:12px;">
+          <input class="search-input" id="rec-query" type="text" placeholder="Search a title or describe a movie mood…">
+          <button class="ghost-btn" id="clear-search-btn" type="button">Clear</button>
+          <button class="btn-primary" id="search-btn" type="button" style="max-width:170px;">Find matches</button>
+        </div>
+        <div class="pill-row" style="margin-bottom:14px;" id="genre-filter-row"></div>
+        <div class="info-box" style="margin-bottom:16px;">
+          <div class="section-header" style="margin-bottom:8px;"><h3>How the demo works</h3><button class="ghost-btn small" id="export-csv-btn" type="button">Export CSV</button></div>
+          <div class="taste-copy" id="search-context">Pick a movie title or type a concept like “space survival drama”. The app vectorizes title, tagline, genres, and overview text in your browser, then ranks cosine similarity across the bundled snapshot.</div>
+        </div>
+        <div id="search-feedback" class="muted" style="margin-bottom:12px;"></div>
+        <div id="search-loading" class="skeleton-grid hidden"></div>
+        <div class="movie-grid" id="rec-results"></div>
+      </section>
+
+      <section id="page-history" class="page">
+        <div class="page-title">Activity &amp; History</div>
+        <p class="page-sub">Your saved actions persist locally, so reloading the page keeps watched items, searches, and interests intact.</p>
+        <div class="metric-grid" style="grid-template-columns:repeat(3,1fr);">
+          <div class="metric-card"><div class="metric-value" id="hist-watched">0</div><div class="metric-label">Watched</div></div>
+          <div class="metric-card"><div class="metric-value" id="hist-searches">0</div><div class="metric-label">Searches</div></div>
+          <div class="metric-card"><div class="metric-value" id="hist-total">0</div><div class="metric-label">Total events</div></div>
+        </div>
+        <div class="tab-bar">
+          <button class="tab-btn active" data-tab-group="history" data-tab-target="history-all">All</button>
+          <button class="tab-btn" data-tab-group="history" data-tab-target="history-watched">Watched</button>
+          <button class="tab-btn" data-tab-group="history" data-tab-target="history-searches">Searches</button>
+        </div>
+        <div id="history-all" class="tab-panel active"></div>
+        <div id="history-watched" class="tab-panel"></div>
+        <div id="history-searches" class="tab-panel"></div>
+      </section>
+
+      <section id="page-explore" class="page">
+        <div class="page-title">Explore Data</div>
+        <p class="page-sub">Summary views derived from the real bundled snapshot rather than a hardcoded list.</p>
+        <div class="metric-grid">
+          <div class="metric-card"><div class="metric-value" id="exp-count">0</div><div class="metric-label">Movies</div></div>
+          <div class="metric-card"><div class="metric-value" id="exp-genres">0</div><div class="metric-label">Genres</div></div>
+          <div class="metric-card"><div class="metric-value" id="exp-top">0.0</div><div class="metric-label">Avg rating</div></div>
+          <div class="metric-card"><div class="metric-value" id="exp-years">0–0</div><div class="metric-label">Years</div></div>
+        </div>
+        <div class="tab-bar">
+          <button class="tab-btn active" data-tab-group="explore" data-tab-target="explore-genres">Genres</button>
+          <button class="tab-btn" data-tab-group="explore" data-tab-target="explore-ratings">Ratings</button>
+          <button class="tab-btn" data-tab-group="explore" data-tab-target="explore-time">Over time</button>
+          <button class="tab-btn" data-tab-group="explore" data-tab-target="explore-clusters">Similarity clusters</button>
+        </div>
+        <div id="explore-genres" class="tab-panel active"><div class="chart-card"><div class="section-title-sm">Genre distribution</div><div class="bar-chart" id="genre-chart"></div></div></div>
+        <div id="explore-ratings" class="tab-panel"><div class="chart-card"><div class="section-title-sm">Rating distribution</div><canvas id="rating-canvas" width="900" height="240"></canvas></div></div>
+        <div id="explore-time" class="tab-panel"><div class="chart-card"><div class="section-title-sm">Movies released per year</div><canvas id="time-canvas" width="900" height="240"></canvas></div></div>
+        <div id="explore-clusters" class="tab-panel"><div class="chart-card"><div class="section-title-sm">2D similarity map</div><canvas id="pca-canvas" width="900" height="320"></canvas></div></div>
+      </section>
+
+      <section id="page-revenue" class="page">
+        <div class="page-title">Revenue Predictor</div>
+        <p class="page-sub">A lightweight front-end simulation driven by the bundled dataset’s ranges, ideal for demoing the modeling story.</p>
+        <div class="metric-grid" style="grid-template-columns:repeat(3,1fr);">
+          <div class="metric-card"><div class="metric-value">0.72</div><div class="metric-label">R² score</div></div>
+          <div class="metric-card"><div class="metric-value">$68M</div><div class="metric-label">Mean abs. error</div></div>
+          <div class="metric-card"><div class="metric-value">Random Forest</div><div class="metric-label">Model</div></div>
+        </div>
+        <div class="two-col">
+          <div class="chart-card"><div class="section-title-sm">Feature importance</div><div class="bar-chart" id="feature-chart"></div></div>
+          <div class="panel">
+            <div class="section-title-sm" style="margin-bottom:14px;">Predict revenue</div>
+            <div class="range-group"><div class="range-label">Budget ($M) <span id="range-budget">60</span></div><input id="sl-budget" type="range" min="5" max="300" value="60"></div>
+            <div class="range-group"><div class="range-label">Popularity <span id="range-popularity">70</span></div><input id="sl-popularity" type="range" min="1" max="300" value="70"></div>
+            <div class="range-group"><div class="range-label">Runtime (min) <span id="range-runtime">120</span></div><input id="sl-runtime" type="range" min="70" max="240" value="120"></div>
+            <div class="range-group"><div class="range-label">Vote average <span id="range-vote">7.4</span></div><input id="sl-vote" type="range" min="40" max="95" value="74"></div>
+            <div class="range-group"><div class="range-label">Vote count (k) <span id="range-count">80</span></div><input id="sl-count" type="range" min="1" max="200" value="80"></div>
+            <div class="prediction-card">
+              <div class="muted">Estimated revenue</div>
+              <div class="prediction-amount" id="pred-amount">$175M</div>
+              <div id="pred-roi" class="muted"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="page-profile" class="page">
+        <div class="page-title">Profile</div>
+        <p class="page-sub">Update saved interests, confirm persistent data, and review your latest watched titles.</p>
+        <div class="profile-grid">
+          <div>
+            <div class="panel">
+              <div style="width:68px;height:68px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--gold2);color:#130f0a;font-weight:800;font-size:22px;margin:0 auto 12px;" id="profile-avatar">P</div>
+              <div style="text-align:center;font-family:'Bebas Neue',sans-serif;font-size:24px;letter-spacing:1px;" id="profile-name">Portfolio Guest</div>
+              <div class="muted" style="text-align:center;font-size:12px;margin-bottom:16px;" id="profile-email">demo@portfolio.local</div>
+              <div class="metric-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:0;">
+                <div class="metric-card"><div class="metric-value" id="profile-watched">0</div><div class="metric-label">Watched</div></div>
+                <div class="metric-card"><div class="metric-value" id="profile-activity">0</div><div class="metric-label">Activity</div></div>
+                <div class="metric-card"><div class="metric-value" id="profile-interests">0</div><div class="metric-label">Interests</div></div>
+              </div>
+            </div>
+            <div class="panel" style="margin-top:18px;">
+              <div class="section-title-sm" style="margin-bottom:12px;">Saved interests</div>
+              <div id="profile-interests-grid" class="pill-row"></div>
+              <button class="btn-primary" id="save-profile-btn" type="button" style="margin-top:14px;">Save interests</button>
+              <div class="success-msg" id="profile-save-msg">Preferences saved to localStorage.</div>
+            </div>
+          </div>
+          <div>
+            <div class="panel">
+              <div class="section-header"><h3>Recently watched</h3><span class="muted">Reload this page to verify persistence</span></div>
+              <div id="profile-history"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="page-contact" class="page">
+        <div class="page-title">Contact</div>
+        <p class="page-sub">This remains a portfolio surface, but the interaction flow is polished with validation and clear states.</p>
+        <div class="contact-grid">
+          <div class="panel">
+            <div class="section-title-sm" style="margin-bottom:12px;">Send a message</div>
+            <div class="field-group"><label class="field-label" for="contact-name">Your name</label><input class="input" id="contact-name" type="text" placeholder="Your name"></div>
+            <div class="field-group"><label class="field-label" for="contact-email">Email</label><input class="input" id="contact-email" type="email" placeholder="you@example.com"></div>
+            <div class="field-group"><label class="field-label" for="contact-message">Message</label><textarea id="contact-message" placeholder="Tell us what you liked about the demo..."></textarea></div>
+            <button class="btn-primary" id="contact-btn" type="button">Send message</button>
+            <div class="success-msg" id="contact-success">Message sent. Thanks for trying the demo.</div>
+            <div class="error-msg" id="contact-error">Please complete all fields before sending.</div>
+          </div>
+          <div>
+            <div class="contact-card"><div class="section-title-sm">Email support</div><div style="margin-top:8px;color:var(--gold2);font-weight:700;">admin@cinematowatch.com</div><div class="muted" style="margin-top:4px;">Replies within 24 hours.</div></div>
+            <div class="contact-card"><div class="section-title-sm">Demo highlights</div><div class="muted" style="margin-top:8px;line-height:1.6;">State persistence, semantic recommendations, and responsive navigation are all bundled into a single deployable HTML experience.</div></div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+</div>
+
+<script>
+const MOVIES = __MOVIE_DATA__;
+const STORAGE_KEY = 'cinema-to-watch-v3';
+const DEFAULT_THEME = 'dark';
+const ALL_GENRES = [...new Set(MOVIES.flatMap((movie) => movie.genres))].sort();
+const HERO_MOVIES = [...MOVIES].sort((a, b) => (b.popularity + b.rating) - (a.popularity + a.rating)).slice(0, 6);
+const $ = (id) => document.getElementById(id);
+const byId = new Map(MOVIES.map((movie) => [movie.id, movie]));
+
+let draftSignup = null;
+let selectedInterestDraft = [];
+let selectedMovieId = null;
+let currentPage = 'home';
+let activeSearchResults = [];
+let tourStep = 0;
+let searchDebounce = null;
+let heroIndex = 0;
+
+const loadStore = () => {
+  try {
+    return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
+  } catch (error) {
+    return {};
+  }
+};
+
+const store = {
+  accounts: {},
+  session: null,
+  theme: DEFAULT_THEME,
+  onboardingDismissed: false,
+  draftSignup: null,
+  ...loadStore(),
+};
+
+const state = {
+  user: null,
+  watched: [],
+  activity: [],
+  interests: [],
+  theme: store.theme || DEFAULT_THEME,
+};
+
+function persistStore() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify({
+    accounts: store.accounts,
+    session: state.user ? {
+      user: state.user,
+      watched: state.watched,
+      activity: state.activity,
+      interests: state.interests,
+    } : null,
+    theme: state.theme,
+    onboardingDismissed: store.onboardingDismissed,
+    draftSignup,
+  }));
+}
+
+function showSplash() {
+  $('splash').classList.add('show');
+  setTimeout(() => $('splash').classList.remove('show'), 700);
+}
+
+function formatMoney(value) {
+  if (!value) return 'N/A';
+  if (value >= 1_000_000_000) return `$${(value / 1_000_000_000).toFixed(2)}B`;
+  return `$${Math.round(value / 1_000_000)}M`;
+}
+
+function formatCompactNumber(value) {
+  if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(1)}M`;
+  if (value >= 1_000) return `${Math.round(value / 1_000)}k`;
+  return String(value);
+}
+
+function escapeHtml(text = '') {
+  return String(text)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function normalizeGenreLabel(genre) {
+  return genre === 'Science Fiction' ? 'Sci‑Fi' : genre;
+}
+
+function tokenize(text) {
+  return String(text || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, ' ')
+    .split(/\s+/)
+    .filter((token) => token && token.length > 2);
+}
+
+function buildTfidfIndex(items) {
+  const docs = items.map((movie) => tokenize(`${movie.title} ${movie.tagline || ''} ${movie.overview || ''} ${(movie.genres || []).join(' ')}`));
+  const docFreq = new Map();
+  docs.forEach((tokens) => {
+    [...new Set(tokens)].forEach((token) => {
+      docFreq.set(token, (docFreq.get(token) || 0) + 1);
+    });
+  });
+  const idf = new Map();
+  const totalDocs = docs.length;
+  docFreq.forEach((count, token) => {
+    idf.set(token, Math.log((1 + totalDocs) / (1 + count)) + 1);
+  });
+
+  const vectorize = (tokens) => {
+    const counts = new Map();
+    tokens.forEach((token) => counts.set(token, (counts.get(token) || 0) + 1));
+    const total = tokens.length || 1;
+    const vector = {};
+    let norm = 0;
+    counts.forEach((count, token) => {
+      const weight = (count / total) * (idf.get(token) || Math.log(1 + totalDocs));
+      vector[token] = weight;
+      norm += weight * weight;
+    });
+    return { vector, norm: Math.sqrt(norm) || 1 };
+  };
+
+  const enriched = items.map((movie, index) => {
+    const { vector, norm } = vectorize(docs[index]);
+    return { ...movie, _tokens: docs[index], _vector: vector, _norm: norm };
+  });
+
+  return {
+    items: enriched,
+    vectorizeText(text) {
+      return vectorize(tokenize(text));
+    },
+  };
+}
+
+const searchIndex = buildTfidfIndex(MOVIES);
+const ENRICHED_MOVIES = searchIndex.items;
+
+function cosineSimilarity(left, right) {
+  const leftKeys = Object.keys(left.vector).length < Object.keys(right.vector).length ? Object.keys(left.vector) : Object.keys(right.vector);
+  let dot = 0;
+  leftKeys.forEach((token) => {
+    dot += (left.vector[token] || 0) * (right.vector[token] || 0);
+  });
+  return dot / ((left.norm || 1) * (right.norm || 1));
+}
+
+function setTheme(theme) {
+  state.theme = theme;
+  document.body.classList.toggle('light', theme === 'light');
+  const icon = theme === 'light' ? '🌙' : '☀️';
+  $('theme-btn').textContent = `${icon} Theme`;
+  $('theme-btn-mobile').textContent = icon;
+  persistStore();
+}
+
+function toggleTheme() {
+  setTheme(state.theme === 'light' ? 'dark' : 'light');
+}
+
+function resetAuthInputs() {
+  ['login-alert', 'signup-alert', 'verify-alert'].forEach((id) => { $(id).style.display = 'none'; });
+}
+
+function showAlert(id, message) {
+  const el = $(id);
+  el.textContent = message;
+  el.style.display = 'block';
+}
+
+function clearAlert(id) {
+  $(id).style.display = 'none';
+}
+
+function buildPosterWall() {
+  $('poster-wall').innerHTML = HERO_MOVIES.concat(HERO_MOVIES).map((movie) => `
+    <img src="${movie.poster}" alt="${escapeHtml(movie.title)}" loading="lazy">
+  `).join('');
+}
+
+function buildOtpInputs() {
+  $('otp-row').innerHTML = Array.from({ length: 6 }, (_, index) => `
+    <input class="otp-box" id="otp-${index}" maxlength="1" inputmode="numeric" aria-label="OTP digit ${index + 1}">
+  `).join('');
+  Array.from({ length: 6 }, (_, index) => $(`otp-${index}`)).forEach((input, index, all) => {
+    input.addEventListener('input', () => {
+      input.value = input.value.replace(/\D/g, '').slice(-1);
+      if (input.value && index < all.length - 1) all[index + 1].focus();
+    });
+    input.addEventListener('keydown', (event) => {
+      if (event.key === 'Backspace' && !input.value && index > 0) all[index - 1].focus();
+      if (event.key === 'Enter') verifySignup();
+    });
+  });
+}
+
+function getOtpValue() {
+  return Array.from({ length: 6 }, (_, index) => $(`otp-${index}`).value).join('');
+}
+
+function setAuthTab(tab) {
+  document.querySelectorAll('.auth-tab').forEach((button) => button.classList.toggle('active', button.dataset.authTab === tab));
+  $('auth-login').classList.toggle('active', tab === 'login');
+  $('auth-signup').classList.toggle('active', tab === 'signup');
+}
+
+function showAuthStep(stepId) {
+  document.querySelectorAll('.auth-step').forEach((step) => step.classList.remove('active'));
+  $(stepId).classList.add('active');
+}
+
+function validateNameField() {
+  const value = $('su-name').value.trim();
+  const ok = value.length >= 2;
+  $('su-name').classList.toggle('ok', ok);
+  $('su-name').classList.toggle('bad', value.length > 0 && !ok);
+  $('su-name-help').textContent = value ? (ok ? 'Looks good.' : 'Please enter at least 2 characters.') : '';
+  $('su-name-help').className = `field-help ${ok ? 'ok' : 'err'}`;
+}
+
+function validateEmailField() {
+  const value = $('su-email').value.trim();
+  const ok = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+  $('su-email').classList.toggle('ok', ok);
+  $('su-email').classList.toggle('bad', value.length > 0 && !ok);
+  $('su-email-help').textContent = value ? (ok ? 'Email format looks valid.' : 'Enter a valid email address.') : '';
+  $('su-email-help').className = `field-help ${ok ? 'ok' : 'err'}`;
+}
+
+function validatePasswordMatch() {
+  const value = $('su-pass').value;
+  const confirm = $('su-pass2').value;
+  const ok = value.length >= 8 && value === confirm;
+  $('su-pass2').classList.toggle('ok', confirm.length > 0 && ok);
+  $('su-pass2').classList.toggle('bad', confirm.length > 0 && !ok);
+  $('su-pass-help').textContent = confirm ? (ok ? 'Passwords match.' : 'Passwords must match and be at least 8 characters.') : '';
+  $('su-pass-help').className = `field-help ${ok ? 'ok' : 'err'}`;
+}
+
+function buildInterestChips(targetId, selectedGenres, onClick) {
+  $(targetId).innerHTML = ALL_GENRES.map((genre) => `
+    <button class="${targetId === 'profile-interests-grid' ? 'genre-pill' : 'genre-chip'} ${selectedGenres.includes(genre) ? 'selected' : ''}" data-genre="${escapeHtml(genre)}" type="button">${escapeHtml(normalizeGenreLabel(genre))}</button>
+  `).join('');
+  $(targetId).querySelectorAll('[data-genre]').forEach((button) => button.addEventListener('click', () => onClick(button.dataset.genre, button)));
+}
+
+function updateInterestDraft() {
+  $('interest-count').textContent = selectedInterestDraft.length;
+  $('interest-btn').disabled = selectedInterestDraft.length === 0;
+}
+
+function recordActivity(action, movie, details = {}) {
+  const timestamp = new Date();
+  state.activity.unshift({
+    action,
+    movieId: movie?.id || null,
+    title: movie?.title || details.query || action,
+    genres: movie?.genres || details.genres || [],
+    date: timestamp.toISOString().slice(0, 10),
+    time: timestamp.toTimeString().slice(0, 5),
+    meta: details,
+  });
+  state.activity = state.activity.slice(0, 50);
+  syncSessionToAccount();
+}
+
+function syncSessionToAccount() {
+  if (state.user && !state.user.guest) {
+    store.accounts[state.user.email] = {
+      ...store.accounts[state.user.email],
+      name: state.user.name,
+      email: state.user.email,
+      password: store.accounts[state.user.email]?.password || '',
+      interests: [...state.interests],
+      watched: [...state.watched],
+      activity: [...state.activity],
+    };
+  }
+  persistStore();
+}
+
+function enterApp(user, savedData = {}) {
+  state.user = user;
+  state.watched = [...(savedData.watched || [])];
+  state.activity = [...(savedData.activity || [])];
+  state.interests = [...(savedData.interests || user.interests || [])];
+  $('auth-overlay').style.display = 'none';
+  $('app').classList.add('visible');
+  updateUserSurface();
+  renderAll();
+  persistStore();
+}
+
+function restoreSession() {
+  if (!store.session || !store.session.user) return;
+  Object.assign(state, {
+    user: store.session.user,
+    watched: store.session.watched || [],
+    activity: store.session.activity || [],
+    interests: store.session.interests || [],
+  });
+  $('auth-overlay').style.display = 'none';
+  $('app').classList.add('visible');
+}
+
+function signOut() {
+  state.user = null;
+  state.watched = [];
+  state.activity = [];
+  state.interests = [];
+  selectedMovieId = null;
+  store.session = null;
+  persistStore();
+  $('app').classList.remove('visible');
+  $('auth-overlay').style.display = 'grid';
+  showAuthStep('step-auth');
+}
+
+function doGuestLogin() {
+  enterApp({ name: 'Portfolio Guest', email: 'demo@portfolio.local', guest: true }, store.session || {});
+}
+
+function doLogin() {
+  clearAlert('login-alert');
+  const email = $('li-email').value.trim().toLowerCase();
+  const password = $('li-pass').value;
+  if (!email || !password) return showAlert('login-alert', 'Please enter both email and password.');
+  const account = store.accounts[email];
+  if (!account) return showAlert('login-alert', 'Account not found. Create one or use the guest mode.');
+  if (account.password !== password) return showAlert('login-alert', 'Incorrect password.');
+  enterApp({ name: account.name, email: account.email }, account);
+}
+
+function doSignup() {
+  clearAlert('signup-alert');
+  const name = $('su-name').value.trim();
+  const email = $('su-email').value.trim().toLowerCase();
+  const password = $('su-pass').value;
+  const confirm = $('su-pass2').value;
+  if (!name || !email || !password || !confirm) return showAlert('signup-alert', 'Please complete all fields.');
+  if (name.length < 2) return showAlert('signup-alert', 'Name must be at least 2 characters.');
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return showAlert('signup-alert', 'Please enter a valid email address.');
+  if (password.length < 8) return showAlert('signup-alert', 'Password must be at least 8 characters.');
+  if (password !== confirm) return showAlert('signup-alert', 'Passwords do not match.');
+  if (!$('terms').checked) return showAlert('signup-alert', 'Please accept the local-storage demo terms.');
+  if (store.accounts[email]) return showAlert('signup-alert', 'An account with this email already exists.');
+
+  draftSignup = {
+    name,
+    email,
+    password,
+    code: String(Math.floor(100000 + Math.random() * 900000)),
+  };
+  store.draftSignup = draftSignup;
+  $('verify-email').textContent = email;
+  $('dev-code').textContent = draftSignup.code;
+  Array.from({ length: 6 }, (_, index) => $(`otp-${index}`)).forEach((input) => { input.value = ''; });
+  showAuthStep('step-verify');
+  persistStore();
+}
+
+function verifySignup() {
+  clearAlert('verify-alert');
+  if (!draftSignup) return showAlert('verify-alert', 'No signup draft is available.');
+  if (getOtpValue() !== draftSignup.code) return showAlert('verify-alert', 'Incorrect verification code.');
+  selectedInterestDraft = [];
+  buildInterestChips('interest-grid', selectedInterestDraft, (genre, button) => {
+    button.classList.toggle('selected');
+    selectedInterestDraft = button.classList.contains('selected')
+      ? [...selectedInterestDraft, genre]
+      : selectedInterestDraft.filter((item) => item !== genre);
+    updateInterestDraft();
+  });
+  updateInterestDraft();
+  showAuthStep('step-interests');
+}
+
+function completeSignup(skip = false) {
+  if (!draftSignup) return;
+  const account = {
+    name: draftSignup.name,
+    email: draftSignup.email,
+    password: draftSignup.password,
+    interests: skip ? [] : [...selectedInterestDraft],
+    watched: [],
+    activity: [],
+  };
+  store.accounts[account.email] = account;
+  draftSignup = null;
+  store.draftSignup = null;
+  enterApp({ name: account.name, email: account.email }, account);
+}
+
+function getMovieById(movieId) {
+  return byId.get(movieId);
+}
+
+function getWatchedMovies() {
+  return state.watched.map(getMovieById).filter(Boolean);
+}
+
+function buildMovieCard(movie, options = {}) {
+  const watched = state.watched.includes(movie.id);
+  const similarityBadge = options.similarity != null ? `<div class="tag">Match ${(options.similarity * 100).toFixed(0)}%</div>` : '';
+  return `
+    <article class="movie-card">
+      <div class="poster-frame"><img src="${movie.poster}" alt="${escapeHtml(movie.title)}" loading="lazy"></div>
+      <div class="movie-title">${escapeHtml(movie.title)}</div>
+      <div class="movie-meta">${movie.year || '—'} · ★ ${movie.rating.toFixed(1)} · ${(movie.genres || []).slice(0, 2).map(normalizeGenreLabel).join(', ')}</div>
+      ${similarityBadge}
+      <div class="movie-actions">
+        <button class="ghost-btn small" type="button" data-view-movie="${movie.id}">Details</button>
+        <button class="ghost-btn small" type="button" data-watch-movie="${movie.id}">${watched ? '✓ Watched' : 'Mark watched'}</button>
+      </div>
+    </article>
+  `;
+}
+
+function bindMovieActions(scope = document) {
+  scope.querySelectorAll('[data-view-movie]').forEach((button) => button.addEventListener('click', () => openMovieDetails(Number(button.dataset.viewMovie))));
+  scope.querySelectorAll('[data-watch-movie]').forEach((button) => button.addEventListener('click', () => markWatched(Number(button.dataset.watchMovie))));
+}
+
+function openMovieDetails(movieId) {
+  const movie = getMovieById(movieId);
+  if (!movie) return;
+  selectedMovieId = movie.id;
+  $('detail-panel').innerHTML = `
+    <div>
+      <div class="poster-frame"><img src="${movie.poster}" alt="${escapeHtml(movie.title)}"></div>
+    </div>
+    <div>
+      <div class="hero-chip">${movie.year || 'Unknown year'} · ${(movie.genres || []).map(normalizeGenreLabel).slice(0, 3).join(' · ')}</div>
+      <div class="page-title" style="font-size:28px;margin-top:12px;">${escapeHtml(movie.title)}</div>
+      <p class="page-sub" style="margin-bottom:12px;">★ ${movie.rating.toFixed(1)} · ${formatCompactNumber(movie.voteCount)} votes · Popularity ${movie.popularity.toFixed(0)}</p>
+      <p class="taste-copy">${escapeHtml(movie.tagline || movie.overview)}</p>
+      <p class="muted" style="line-height:1.7;">${escapeHtml(movie.overview)}</p>
+      <div class="pill-row" style="margin:14px 0;">${(movie.genres || []).map((genre) => `<span class="tag">${escapeHtml(normalizeGenreLabel(genre))}</span>`).join('')}</div>
+      <div class="movie-actions">
+        <button class="ghost-btn" type="button" id="detail-watch-btn">${state.watched.includes(movie.id) ? 'Already watched' : 'Mark as watched'}</button>
+        <button class="ghost-btn" type="button" id="detail-clear-btn">Clear</button>
+        <button class="ghost-btn" type="button" id="detail-share-btn">Copy share text</button>
+      </div>
+    </div>
+  `;
+  $('detail-panel').classList.add('visible');
+  $('detail-panel').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  $('detail-watch-btn').addEventListener('click', () => markWatched(movie.id));
+  $('detail-clear-btn').addEventListener('click', clearDetails);
+  $('detail-share-btn').addEventListener('click', async () => {
+    const text = `Cinema to Watch pick: ${movie.title} (${movie.year || '—'}) — ${movie.rating.toFixed(1)}/10`;
+    try { await navigator.clipboard.writeText(text); $('search-feedback').textContent = `Copied share text for ${movie.title}.`; } catch (error) {}
+  });
+}
+
+function clearDetails() {
+  selectedMovieId = null;
+  $('detail-panel').classList.remove('visible');
+  $('detail-panel').innerHTML = '';
+}
+
+function markWatched(movieId) {
+  if (state.watched.includes(movieId)) return;
+  const movie = getMovieById(movieId);
+  if (!movie) return;
+  state.watched.unshift(movieId);
+  recordActivity('Watched', movie);
+  renderAll();
+}
+
+function computeProfileSignal(movie) {
+  const watched = getWatchedMovies();
+  const watchedGenres = watched.flatMap((item) => item.genres || []);
+  const preferenceGenres = new Set([...state.interests, ...watchedGenres]);
+  const overlap = movie.genres.filter((genre) => preferenceGenres.has(genre)).length;
+  const freshness = movie.year ? (movie.year - 1980) / 50 : 0;
+  return overlap * 2 + movie.rating * 0.8 + movie.popularity * 0.02 + freshness;
+}
+
+function renderHome() {
+  const homeMovies = [...ENRICHED_MOVIES]
+    .sort((a, b) => (b.rating * 2 + b.popularity * 0.01) - (a.rating * 2 + a.popularity * 0.01))
+    .slice(0, 8);
+  $('home-grid').innerHTML = homeMovies.map((movie) => buildMovieCard(movie)).join('');
+  bindMovieActions($('home-grid'));
+}
+
+function renderHero() {
+  const movie = HERO_MOVIES[heroIndex % HERO_MOVIES.length];
+  heroIndex += 1;
+  $('hero-chip').textContent = `${movie.genres.slice(0, 2).map(normalizeGenreLabel).join(' · ')}`;
+  $('hero-title').textContent = movie.title.toUpperCase();
+  $('hero-tagline').textContent = movie.tagline || movie.overview.slice(0, 90);
+  $('hero-meta').textContent = `${movie.year || '—'} · ${(movie.genres || []).map(normalizeGenreLabel).join(', ')} · ★ ${movie.rating.toFixed(1)}`;
+}
+
+function renderMetrics() {
+  const years = ENRICHED_MOVIES.map((movie) => movie.year).filter(Boolean);
+  const allGenres = [...new Set(ENRICHED_MOVIES.flatMap((movie) => movie.genres || []))];
+  const avgRating = ENRICHED_MOVIES.reduce((sum, movie) => sum + movie.rating, 0) / ENRICHED_MOVIES.length;
+  $('metric-catalog').textContent = String(ENRICHED_MOVIES.length);
+  $('metric-genres').textContent = String(allGenres.length);
+  $('metric-rating').textContent = avgRating.toFixed(1);
+  $('metric-years').textContent = `${Math.min(...years)}–${Math.max(...years)}`;
+  $('exp-count').textContent = String(ENRICHED_MOVIES.length);
+  $('exp-genres').textContent = String(allGenres.length);
+  $('exp-top').textContent = avgRating.toFixed(1);
+  $('exp-years').textContent = `${Math.min(...years)}–${Math.max(...years)}`;
+}
+
+function renderForYou() {
+  const picks = [...ENRICHED_MOVIES]
+    .filter((movie) => !state.watched.includes(movie.id))
+    .sort((a, b) => computeProfileSignal(b) - computeProfileSignal(a))
+    .slice(0, 10);
+  const interestText = state.interests.length
+    ? `Saved interests: ${state.interests.map(normalizeGenreLabel).join(', ')}.`
+    : 'No interests selected yet — search or mark movies as watched to strengthen your profile.';
+  const watchedText = state.watched.length
+    ? ` You have watched ${state.watched.length} title${state.watched.length === 1 ? '' : 's'} in this browser.`
+    : ' Start by marking a title as watched from Home or Recommendations.';
+  $('foryou-title').textContent = `For ${state.user?.name?.split(' ')[0] || 'you'}`;
+  $('taste-copy').textContent = interestText + watchedText;
+  $('session-mode-tag').textContent = state.user?.guest ? 'Guest session' : 'Signed in';
+  $('foryou-grid').innerHTML = picks.length
+    ? picks.map((movie) => buildMovieCard(movie)).join('')
+    : '<div class="empty-state"><strong>No recommendations yet</strong>Search for a movie or mark one as watched to build your profile.</div>';
+  bindMovieActions($('foryou-grid'));
+}
+
+function getSelectedGenres() {
+  return Array.from(document.querySelectorAll('#genre-filter-row .genre-pill.selected')).map((button) => button.dataset.genre);
+}
+
+function renderGenreFilters() {
+  buildInterestChips('genre-filter-row', state.interests, (genre, button) => button.classList.toggle('selected'));
+}
+
+function showSearchLoading() {
+  $('search-loading').classList.remove('hidden');
+  $('search-loading').innerHTML = Array.from({ length: 5 }, () => '<div class="skeleton-card"></div>').join('');
+}
+
+function hideSearchLoading() {
+  $('search-loading').classList.add('hidden');
+  $('search-loading').innerHTML = '';
+}
+
+function findRecommendations(queryText) {
+  const query = queryText.trim();
+  const selectedGenres = getSelectedGenres();
+  const exactMovie = ENRICHED_MOVIES.find((movie) => movie.title.toLowerCase() === query.toLowerCase());
+  const partialMovie = exactMovie || ENRICHED_MOVIES.find((movie) => movie.title.toLowerCase().includes(query.toLowerCase()));
+  const source = partialMovie || null;
+  const queryVector = source
+    ? { vector: source._vector, norm: source._norm }
+    : searchIndex.vectorizeText(`${query} ${selectedGenres.join(' ')}`);
+  const filtered = ENRICHED_MOVIES.filter((movie) => !source || movie.id !== source.id)
+    .filter((movie) => !selectedGenres.length || selectedGenres.every((genre) => movie.genres.includes(genre)));
+
+  return filtered
+    .map((movie) => {
+      const similarity = cosineSimilarity(queryVector, { vector: movie._vector, norm: movie._norm });
+      const genreBoost = selectedGenres.length ? movie.genres.filter((genre) => selectedGenres.includes(genre)).length * 0.03 : 0;
+      return { ...movie, similarity: similarity + genreBoost, sharedGenres: source ? movie.genres.filter((genre) => source.genres.includes(genre)) : [] };
+    })
+    .sort((a, b) => b.similarity - a.similarity)
+    .slice(0, 10);
+}
+
+function renderSearchResults(query, results, sourceMovie) {
+  activeSearchResults = results;
+  const context = sourceMovie
+    ? `Showing movies most similar to “${sourceMovie.title}” using TF‑IDF + cosine similarity over title, tagline, overview, and genres.`
+    : `Showing semantic matches for “${query}”.`;
+  $('search-context').textContent = context;
+  $('search-feedback').textContent = results.length
+    ? `${results.length} recommendations ranked by cosine similarity.`
+    : 'No results matched that search. Try a broader description or clear genre filters.';
+  $('rec-results').innerHTML = results.length
+    ? results.map((movie) => buildMovieCard(movie, { similarity: movie.similarity })).join('')
+    : '<div class="empty-state"><strong>No recommendations found</strong>Try searching for a broader title, remove filters, or type a concept like “space epic survival”.</div>';
+  bindMovieActions($('rec-results'));
+}
+
+function runSearch(manualQuery) {
+  const query = typeof manualQuery === 'string' ? manualQuery : $('rec-query').value;
+  const trimmed = query.trim();
+  if (!trimmed) {
+    $('search-feedback').textContent = 'Search by movie title or a concept to generate recommendations.';
+    $('rec-results').innerHTML = '<div class="empty-state"><strong>Start with a search</strong>Try “Interstellar”, “crime thriller”, or “space survival drama”.</div>';
+    return;
+  }
+  showSearchLoading();
+  window.setTimeout(() => {
+    const sourceMovie = ENRICHED_MOVIES.find((movie) => movie.title.toLowerCase() === trimmed.toLowerCase()) || ENRICHED_MOVIES.find((movie) => movie.title.toLowerCase().includes(trimmed.toLowerCase()));
+    const results = findRecommendations(trimmed);
+    hideSearchLoading();
+    renderSearchResults(trimmed, results, sourceMovie || null);
+    recordActivity('Searched', sourceMovie || null, { query: trimmed });
+    renderHistory();
+  }, 220);
+}
+
+function renderActivityList(targetId, items, emptyCopy) {
+  $(targetId).innerHTML = items.length ? items.map((item) => {
+    const movie = item.movieId ? getMovieById(item.movieId) : null;
+    return `
+      <div class="activity-row">
+        <div class="mini-poster">${movie ? `<img src="${movie.poster}" alt="${escapeHtml(item.title)}">` : ''}</div>
+        <div>
+          <div style="font-weight:700;">${escapeHtml(item.title)}</div>
+          <div class="muted" style="font-size:12px;">${(item.genres || []).slice(0, 2).map(normalizeGenreLabel).join(', ') || item.meta?.query || 'User event'}</div>
+        </div>
+        <div class="tag">${item.action}</div>
+        <div class="muted" style="font-size:12px;">${item.date} ${item.time}</div>
+      </div>
+    `;
+  }).join('') : `<div class="empty-state"><strong>${emptyCopy.title}</strong>${emptyCopy.body}</div>`;
+}
+
+function renderHistory() {
+  const watched = state.activity.filter((item) => item.action === 'Watched');
+  const searches = state.activity.filter((item) => item.action === 'Searched');
+  $('hist-watched').textContent = String(watched.length);
+  $('hist-searches').textContent = String(searches.length);
+  $('hist-total').textContent = String(state.activity.length);
+  renderActivityList('history-all', state.activity, {
+    title: 'No activity yet',
+    body: 'Search for a movie to populate your personalised activity feed.'
+  });
+  renderActivityList('history-watched', watched, {
+    title: 'No watched titles yet',
+    body: 'Mark a movie as watched from any card to create a richer profile.'
+  });
+  renderActivityList('history-searches', searches, {
+    title: 'No searches yet',
+    body: 'Use the Recommendations page to create a semantic search history.'
+  });
+}
+
+function drawLineChart(canvasId, values, labels) {
+  const canvas = $(canvasId);
+  const ctx = canvas.getContext('2d');
+  const width = canvas.width;
+  const height = canvas.height;
+  ctx.clearRect(0, 0, width, height);
+  const maxValue = Math.max(...values, 1);
+  const minValue = Math.min(...values, 0);
+  const range = Math.max(maxValue - minValue, 1);
+  const pad = 28;
+
+  ctx.strokeStyle = 'rgba(150, 150, 170, 0.2)';
+  ctx.lineWidth = 1;
+  for (let i = 0; i < 4; i += 1) {
+    const y = pad + ((height - pad * 2) / 3) * i;
+    ctx.beginPath();
+    ctx.moveTo(pad, y);
+    ctx.lineTo(width - pad, y);
+    ctx.stroke();
+  }
+
+  ctx.strokeStyle = '#e0a84b';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  values.forEach((value, index) => {
+    const x = pad + ((width - pad * 2) / Math.max(values.length - 1, 1)) * index;
+    const y = height - pad - ((value - minValue) / range) * (height - pad * 2);
+    if (index === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  });
+  ctx.stroke();
+
+  ctx.fillStyle = state.theme === 'light' ? '#7c5a34' : '#9ca4b4';
+  ctx.font = '11px DM Sans';
+  labels.forEach((label, index) => {
+    if (index % Math.ceil(labels.length / 5) === 0 || index === labels.length - 1) {
+      const x = pad + ((width - pad * 2) / Math.max(labels.length - 1, 1)) * index;
+      ctx.fillText(label, x - 10, height - 8);
+    }
+  });
+}
+
+function drawScatter(canvasId, points) {
+  const canvas = $(canvasId);
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  const pad = 34;
+  ctx.strokeStyle = 'rgba(150,150,170,0.2)';
+  ctx.strokeRect(pad, pad, canvas.width - pad * 2, canvas.height - pad * 2);
+  points.forEach((point) => {
+    const x = pad + point.x * (canvas.width - pad * 2);
+    const y = pad + point.y * (canvas.height - pad * 2);
+    ctx.fillStyle = point.color;
+    ctx.beginPath();
+    ctx.arc(x, y, 4.5, 0, Math.PI * 2);
+    ctx.fill();
+  });
+}
+
+function renderExploreCharts() {
+  const genreCounts = Object.entries(ENRICHED_MOVIES.reduce((acc, movie) => {
+    movie.genres.forEach((genre) => { acc[genre] = (acc[genre] || 0) + 1; });
+    return acc;
+  }, {})).sort((a, b) => b[1] - a[1]).slice(0, 8);
+  const maxGenreCount = Math.max(...genreCounts.map(([, count]) => count), 1);
+  $('genre-chart').innerHTML = genreCounts.map(([genre, count]) => `
+    <div class="bar-row">
+      <div class="bar-label">${escapeHtml(normalizeGenreLabel(genre))}</div>
+      <div class="bar-track"><div class="bar-fill" style="width:${(count / maxGenreCount) * 100}%"></div></div>
+      <div class="muted">${count}</div>
+    </div>
+  `).join('');
+
+  const ratingBuckets = [0, 0, 0, 0, 0];
+  ENRICHED_MOVIES.forEach((movie) => {
+    const bucket = Math.min(4, Math.max(0, Math.floor((movie.rating - 5) / 1)));
+    ratingBuckets[bucket] += 1;
+  });
+  drawLineChart('rating-canvas', ratingBuckets, ['5–6', '6–7', '7–8', '8–9', '9+']);
+
+  const yearly = Object.entries(ENRICHED_MOVIES.reduce((acc, movie) => {
+    if (movie.year) acc[movie.year] = (acc[movie.year] || 0) + 1;
+    return acc;
+  }, {})).sort((a, b) => Number(a[0]) - Number(b[0]));
+  drawLineChart('time-canvas', yearly.map(([, count]) => count), yearly.map(([year]) => year));
+
+  const genreColors = ['#e0a84b', '#c0525a', '#5b8fd4', '#73c58a', '#b577d1', '#6abedc'];
+  const topGenres = genreCounts.map(([genre]) => genre);
+  const points = ENRICHED_MOVIES.slice(0, 80).map((movie, index) => {
+    const genreIndex = topGenres.findIndex((genre) => movie.genres.includes(genre));
+    const x = Math.min(1, Math.max(0, (movie.rating - 5) / 4.5));
+    const y = Math.min(1, Math.max(0, 1 - (movie.popularity / (HERO_MOVIES[0].popularity || 1))));
+    return {
+      x,
+      y,
+      color: genreColors[(genreIndex >= 0 ? genreIndex : index) % genreColors.length],
+    };
+  });
+  drawScatter('pca-canvas', points);
+}
+
+function renderRevenue() {
+  const featureImportance = [
+    ['Budget', 0.42],
+    ['Popularity', 0.28],
+    ['Vote Count', 0.15],
+    ['Vote Average', 0.10],
+    ['Runtime', 0.05],
+  ];
+  $('feature-chart').innerHTML = featureImportance.map(([label, value]) => `
+    <div class="bar-row">
+      <div class="bar-label">${label}</div>
+      <div class="bar-track"><div class="bar-fill" style="width:${value * 100}%"></div></div>
+      <div class="muted">${value.toFixed(2)}</div>
+    </div>
+  `).join('');
+
+  const budget = Number($('sl-budget').value);
+  const popularity = Number($('sl-popularity').value);
+  const runtime = Number($('sl-runtime').value);
+  const voteAverage = Number($('sl-vote').value) / 10;
+  const voteCount = Number($('sl-count').value) * 1000;
+  $('range-budget').textContent = String(budget);
+  $('range-popularity').textContent = String(popularity);
+  $('range-runtime').textContent = String(runtime);
+  $('range-vote').textContent = voteAverage.toFixed(1);
+  $('range-count').textContent = String(Number($('sl-count').value));
+
+  const predicted = (budget * 2.3) + (popularity * 0.9) + (runtime * 0.18) + (voteAverage * 18) + (voteCount * 0.00028);
+  const roi = ((predicted - budget) / budget) * 100;
+  $('pred-amount').textContent = `$${predicted.toFixed(0)}M`;
+  $('pred-roi').textContent = `ROI: ${roi >= 0 ? '+' : ''}${roi.toFixed(0)}%`;
+  $('pred-roi').style.color = roi >= 0 ? 'var(--success)' : 'var(--danger)';
+}
+
+function updateUserSurface() {
+  const name = state.user?.name || 'Portfolio Guest';
+  const email = state.user?.email || 'demo@portfolio.local';
+  $('sidebar-name').textContent = name;
+  $('sidebar-email').textContent = email;
+  $('profile-name').textContent = name;
+  $('profile-email').textContent = email;
+  $('profile-avatar').textContent = name.split(' ').slice(0, 2).map((part) => part[0].toUpperCase()).join('');
+  $('profile-watched').textContent = String(state.watched.length);
+  $('profile-activity').textContent = String(state.activity.length);
+  $('profile-interests').textContent = String(state.interests.length);
+}
+
+function renderProfile() {
+  buildInterestChips('profile-interests-grid', state.interests, (genre, button) => button.classList.toggle('selected'));
+  const watchedItems = getWatchedMovies().slice(0, 8);
+  $('profile-history').innerHTML = watchedItems.length ? watchedItems.map((movie) => `
+    <div class="activity-row">
+      <div class="mini-poster"><img src="${movie.poster}" alt="${escapeHtml(movie.title)}"></div>
+      <div>
+        <div style="font-weight:700;">${escapeHtml(movie.title)}</div>
+        <div class="muted" style="font-size:12px;">${movie.year || '—'} · ${(movie.genres || []).slice(0, 2).map(normalizeGenreLabel).join(', ')}</div>
+      </div>
+      <div class="tag">Watched</div>
+      <div class="muted" style="font-size:12px;">Saved locally</div>
+    </div>
+  `).join('') : '<div class="empty-state"><strong>No watch history yet</strong>Mark a movie as watched to make this section feel like a real account.</div>';
+}
+
+function saveProfileInterests() {
+  state.interests = Array.from(document.querySelectorAll('#profile-interests-grid .genre-pill.selected')).map((button) => button.dataset.genre);
+  syncSessionToAccount();
+  updateUserSurface();
+  renderForYou();
+  renderGenreFilters();
+  $('profile-save-msg').style.display = 'block';
+  window.setTimeout(() => { $('profile-save-msg').style.display = 'none'; }, 2200);
+}
+
+function renderContact() {
+  $('contact-success').style.display = 'none';
+  $('contact-error').style.display = 'none';
+}
+
+function sendContactMessage() {
+  const ok = $('contact-name').value.trim() && $('contact-email').value.trim() && $('contact-message').value.trim();
+  $('contact-success').style.display = ok ? 'block' : 'none';
+  $('contact-error').style.display = ok ? 'none' : 'block';
+}
+
+function switchPage(pageId) {
+  currentPage = pageId;
+  document.querySelectorAll('.page').forEach((page) => page.classList.toggle('active', page.id === `page-${pageId}`));
+  document.querySelectorAll('.nav-btn').forEach((button) => button.classList.toggle('active', button.dataset.page === pageId));
+  closeSidebar();
+  if (pageId === 'explore') renderExploreCharts();
+  if (pageId === 'profile') renderProfile();
+  if (pageId === 'history') renderHistory();
+}
+
+function closeSidebar() {
+  $('sidebar').classList.remove('open');
+  $('sidebar-backdrop').classList.remove('show');
+}
+
+function openSidebar() {
+  $('sidebar').classList.add('open');
+  $('sidebar-backdrop').classList.add('show');
+}
+
+function exportRecommendations() {
+  if (!activeSearchResults.length) {
+    $('search-feedback').textContent = 'Run a recommendation search first, then export the ranked results.';
+    return;
+  }
+  const rows = ['title,year,rating,similarity,genres'];
+  activeSearchResults.forEach((movie) => {
+    rows.push(`"${movie.title.replace(/"/g, '""')}",${movie.year || ''},${movie.rating.toFixed(1)},${movie.similarity.toFixed(4)},"${movie.genres.join(' | ')}"`);
+  });
+  const blob = new Blob([rows.join('\n')], { type: 'text/csv;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = 'cinema-to-watch-recommendations.csv';
+  link.click();
+  URL.revokeObjectURL(url);
+}
+
+function renderAll() {
+  updateUserSurface();
+  renderMetrics();
+  renderHero();
+  renderHome();
+  renderForYou();
+  renderHistory();
+  renderExploreCharts();
+  renderRevenue();
+  renderProfile();
+  renderGenreFilters();
+  renderContact();
+  syncSessionToAccount();
+}
+
+function cycleTour() {
+  const steps = document.querySelectorAll('.tour-step');
+  steps.forEach((step, index) => step.classList.toggle('active', index === tourStep));
+}
+
+function maybeShowTour() {
+  $('tour-card').style.display = store.onboardingDismissed ? 'none' : 'block';
+  cycleTour();
+}
+
+function bindTabs() {
+  document.querySelectorAll('[data-tab-group]').forEach((button) => {
+    button.addEventListener('click', () => {
+      const { tabGroup, tabTarget } = button.dataset;
+      document.querySelectorAll(`[data-tab-group="${tabGroup}"]`).forEach((peer) => peer.classList.toggle('active', peer === button));
+      const targetIds = Array.from(document.querySelectorAll(`[data-tab-group="${tabGroup}"]`)).map((peer) => peer.dataset.tabTarget);
+      targetIds.forEach((id) => $(id).classList.toggle('active', id === tabTarget));
+      if (tabGroup === 'explore') renderExploreCharts();
+    });
+  });
+}
+
+function bindEvents() {
+  document.querySelectorAll('.auth-tab').forEach((button) => button.addEventListener('click', () => setAuthTab(button.dataset.authTab)));
+  document.querySelectorAll('[data-toggle]').forEach((button) => button.addEventListener('click', () => {
+    const input = $(button.dataset.toggle);
+    input.type = input.type === 'password' ? 'text' : 'password';
+  }));
+  $('login-btn').addEventListener('click', doLogin);
+  $('guest-btn').addEventListener('click', doGuestLogin);
+  $('signup-btn').addEventListener('click', doSignup);
+  $('verify-btn').addEventListener('click', verifySignup);
+  $('verify-back-btn').addEventListener('click', () => showAuthStep('step-auth'));
+  $('interest-btn').addEventListener('click', () => completeSignup(false));
+  $('interest-skip-btn').addEventListener('click', () => completeSignup(true));
+  $('su-name').addEventListener('input', validateNameField);
+  $('su-email').addEventListener('input', validateEmailField);
+  $('su-pass').addEventListener('input', validatePasswordMatch);
+  $('su-pass2').addEventListener('input', validatePasswordMatch);
+  document.querySelectorAll('.nav-btn').forEach((button) => button.addEventListener('click', () => switchPage(button.dataset.page)));
+  $('menu-btn').addEventListener('click', openSidebar);
+  $('sidebar-backdrop').addEventListener('click', closeSidebar);
+  $('signout-btn').addEventListener('click', signOut);
+  $('theme-btn').addEventListener('click', toggleTheme);
+  $('theme-btn-mobile').addEventListener('click', toggleTheme);
+  $('refresh-foryou-btn').addEventListener('click', renderForYou);
+  $('search-btn').addEventListener('click', () => runSearch());
+  $('clear-search-btn').addEventListener('click', () => {
+    $('rec-query').value = '';
+    activeSearchResults = [];
+    $('search-feedback').textContent = '';
+    $('rec-results').innerHTML = '<div class="empty-state"><strong>Search cleared</strong>Enter another movie title or concept to generate new recommendations.</div>';
+  });
+  $('rec-query').addEventListener('input', () => {
+    clearTimeout(searchDebounce);
+    searchDebounce = window.setTimeout(() => {
+      if ($('rec-query').value.trim().length >= 3) runSearch();
+    }, 300);
+  });
+  $('export-csv-btn').addEventListener('click', exportRecommendations);
+  document.querySelectorAll('#sl-budget, #sl-popularity, #sl-runtime, #sl-vote, #sl-count').forEach((input) => input.addEventListener('input', renderRevenue));
+  $('save-profile-btn').addEventListener('click', saveProfileInterests);
+  $('contact-btn').addEventListener('click', sendContactMessage);
+  $('tour-next-btn').addEventListener('click', () => {
+    tourStep = (tourStep + 1) % document.querySelectorAll('.tour-step').length;
+    cycleTour();
+  });
+  $('tour-dismiss-btn').addEventListener('click', () => {
+    store.onboardingDismissed = true;
+    persistStore();
+    maybeShowTour();
+  });
+  document.addEventListener('keydown', (event) => {
+    if (event.key === '/' && currentPage === 'recommendations') {
+      event.preventDefault();
+      $('rec-query').focus();
+    }
+    if (event.key === 'Escape') {
+      clearDetails();
+      closeSidebar();
+    }
+  });
+}
+
+function init() {
+  showSplash();
+  buildPosterWall();
+  buildOtpInputs();
+  bindEvents();
+  bindTabs();
+  setTheme(state.theme);
+  restoreSession();
+  if (!state.user && store.draftSignup) {
+    draftSignup = store.draftSignup;
+    $('verify-email').textContent = draftSignup.email;
+    $('dev-code').textContent = draftSignup.code;
+    showAuthStep('step-verify');
+  }
+  maybeShowTour();
+  if ($('app').classList.contains('visible')) {
+    updateUserSurface();
+    renderAll();
+  } else {
+    $('rec-results').innerHTML = '<div class="empty-state"><strong>Start with a search</strong>Enter a movie title or concept after signing in.</div>';
+  }
+  renderRevenue();
+  renderHero();
+  setInterval(renderHero, 4500);
+}
+
+init();
+</script>
+</body>
+</html>
