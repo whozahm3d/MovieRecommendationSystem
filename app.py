@@ -515,7 +515,7 @@ def _show_wiki_grid():
 # ══════════════════════════════════════════════════════════════
 def page_recommendations(df, model_data):
     st.markdown('<div class="page-title">🔍 Recommendations</div>', unsafe_allow_html=True)
-    st.markdown('<div class="page-sub">Search a movie and get ML-powered similar recommendations.</div>', unsafe_allow_html=True)
+    st.markdown('<div class="page-sub">Search a movie using the official TF-IDF → SVD → K-Means → cosine similarity pipeline.</div>', unsafe_allow_html=True)
 
     col_q, col_btn = st.columns([5, 1])
     with col_q:
@@ -524,6 +524,7 @@ def page_recommendations(df, model_data):
         search = st.button("Search", use_container_width=True)
 
     genre_filter = st.multiselect("Filter by genre", ALL_GENRES, key="rec_genre_filter")
+    st.caption(describe_official_pipeline())
 
     if df is None:
         st.warning("Dataset required for recommendations. Add CSV files and restart.")

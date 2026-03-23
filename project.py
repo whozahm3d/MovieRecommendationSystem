@@ -1,6 +1,7 @@
 """Utilities for exploring the Movie Recommendation System dataset.
 
 Examples:
+    python project.py pipeline
     python project.py summary
     python project.py recommend --title "Inception" --top 5
     python project.py revenue --budget 160 --popularity 90 --runtime 148 --vote-average 8.3 --vote-count 22000
@@ -14,8 +15,9 @@ from pathlib import Path
 import pandas as pd
 
 from movie_recommendation import (
-    build_recommender,
+    build_official_recommender,
     dataset_summary,
+    describe_official_pipeline,
     load_movie_data,
     recommend_by_title,
     top_genres,
@@ -33,9 +35,10 @@ def create_parser() -> argparse.ArgumentParser:
 
     subparsers = parser.add_subparsers(dest="command", required=True)
 
+    subparsers.add_parser("pipeline", help="Print the official recommendation pipeline.")
     subparsers.add_parser("summary", help="Print dataset-level summary statistics.")
 
-    recommend_parser = subparsers.add_parser("recommend", help="Generate movie recommendations.")
+    recommend_parser = subparsers.add_parser("recommend", help="Generate movie recommendations with the official pipeline.")
     recommend_parser.add_argument("--title", required=True, help="Movie title to match against the dataset.")
     recommend_parser.add_argument("--genre", action="append", default=[], help="Optional genre filter; repeat for multiple genres.")
     recommend_parser.add_argument("--top", type=int, default=10, help="Number of recommendations to print.")
@@ -56,6 +59,10 @@ def format_table(frame: pd.DataFrame) -> str:
     return frame.to_string(index=False)
 
 
+def run_pipeline() -> None:
+    print(describe_official_pipeline())
+
+
 def run_summary(dataset_dir: Path) -> None:
     df = load_movie_data(dataset_dir)
     summary = dataset_summary(df)
@@ -74,13 +81,15 @@ def run_summary(dataset_dir: Path) -> None:
 
 def run_recommend(dataset_dir: Path, title: str, genres: list[str], top: int) -> None:
     df = load_movie_data(dataset_dir)
-    artifacts = build_recommender(df)
+    artifacts = build_official_recommender(df)
     recommendations = recommend_by_title(artifacts, title=title, genre_filter=genres or None, limit=top)
 
     if recommendations.empty:
         print(f"No recommendations found for '{title}'.")
         return
 
+    print(describe_official_pipeline())
+    print()
     preview = recommendations[["title", "vote_average", "release_year", "similarity"]].copy()
     preview.columns = ["Title", "Rating", "Year", "Similarity"]
     print(format_table(preview))
@@ -110,7 +119,9 @@ def main() -> None:
     args = parser.parse_args()
     dataset_dir = Path(args.dataset_dir)
 
-    if args.command == "summary":
+    if args.command == "pipeline":
+        run_pipeline()
+    elif args.command == "summary":
         run_summary(dataset_dir)
     elif args.command == "recommend":
         run_recommend(dataset_dir, title=args.title, genres=args.genre, top=args.top)
