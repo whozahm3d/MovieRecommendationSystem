@@ -303,6 +303,92 @@ You can adapt these directly for your resume:
 
 ---
 
+## Version 4 — Add one more project
+
+To become a stronger job-ready portfolio, pair this repo with **one additional project** that shows a different strength.
+
+### Best complementary project options
+
+#### Option A — SQL + dashboard project
+Build a data project with:
+- SQL cleaning and transformations
+- a dashboard in Power BI, Tableau, or Streamlit
+- business metrics and stakeholder insights
+
+**Why pair it with this repo:** it adds analytics + reporting depth.
+
+#### Option B — Backend/API project
+Build a FastAPI or Flask service with:
+- REST endpoints
+- authentication
+- database persistence
+- deployment
+
+**Why pair it with this repo:** it proves software engineering and backend readiness.
+
+#### Option C — Experiment-tracking ML project
+Build a machine learning project with:
+- train/validation/test split
+- experiment comparison
+- feature importance or SHAP
+- reproducible metrics
+
+**Why pair it with this repo:** it strengthens your ML rigor.
+
+### Recommended pairing
+
+If your target role is:
+- **Data/ML internship:** pair this with **Option C**.
+- **Data analyst internship:** pair this with **Option A**.
+- **Software/full-stack internship:** pair this with **Option B**.
+
+---
+
+## Resume-ready bullets
+
+You can adapt these directly for your resume:
+
+- Built a movie recommendation system using Python, pandas, scikit-learn, TF-IDF, Truncated SVD, K-Means, and cosine similarity.  
+- Developed a Streamlit application for personalized discovery, dataset analytics, and box-office revenue prediction.  
+- Refactored the project into a reusable Python package and CLI, improving maintainability and reproducibility.  
+- Added a measurable evaluation scorecard for recommendation coverage and revenue-model performance.  
+- Prepared the app for portfolio deployment with documented setup, environment configuration, and Streamlit defaults.  
+
+---
+
+## Future improvements
+
+- persist user accounts and watched history outside session state
+- add automated tests for the recommender and revenue pipeline
+- benchmark the official pipeline against a second recommender baseline
+- add screenshots, a live demo link, and a short case-study section to this README
+
+---
+
+## Resume-ready bullets
+
+You can adapt these directly for your resume:
+
+- Built a movie recommendation system using Python, pandas, scikit-learn, TF-IDF, Truncated SVD, K-Means, and cosine similarity.  
+- Developed a Streamlit application for personalized discovery, dataset analytics, and box-office revenue prediction.  
+- Refactored the project into a reusable Python package and CLI, improving maintainability and reproducibility.  
+- Added a measurable evaluation scorecard for recommendation coverage and revenue-model performance.  
+- Prepared the app for portfolio deployment with documented setup, environment configuration, and Streamlit defaults.  
+
+### Revenue model
+
+## Future improvements
+
+- persist user accounts and watched history outside session state
+- add automated tests for the recommender and revenue pipeline
+- benchmark the official pipeline against a second recommender baseline
+- add screenshots, a live demo link, and a short case-study section to this README
+
+- Persist user accounts and watched history outside session state.
+- Add automated tests for the recommender and revenue pipeline.
+- Introduce offline evaluation metrics for recommendations.
+- Split notebook exploration into dedicated notebooks for EDA and experiments.
+
 ## License
 
 This project is licensed under the [MIT License](LICENSE).
