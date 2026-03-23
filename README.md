@@ -9,7 +9,7 @@ This repository is now structured to support four portfolio goals:
 - **Version 3 — Make it deployable:** Streamlit config, environment guidance, and deployment steps.
 - **Version 4 — Add one more project:** a roadmap for pairing this app with a second portfolio project that fills skill gaps.
 
----
+## What this repo includes
 
 ## Why this project is worth showing employers
 
@@ -98,7 +98,9 @@ It gives you a recommendation story that is easy to explain in interviews:
 pip install -r requirements.txt
 ```
 
----
+```bash
+pip install -r requirements.txt
+```
 
 ## Data requirements
 
@@ -109,7 +111,8 @@ Place the TMDB dataset files in the project root.
 
 The app and CLI work without the credits file, but recommendation quality improves when it is available.
 
----
+- Required: `tmdb_5000_movies.csv`
+- Optional: `tmdb_5000_credits.csv`
 
 ## Running locally
 
@@ -282,7 +285,7 @@ You can adapt these directly for your resume:
 - Added a measurable evaluation scorecard for recommendation coverage and revenue-model performance.  
 - Prepared the app for portfolio deployment with documented setup, environment configuration, and Streamlit defaults.  
 
----
+### Revenue model
 
 ## Future improvements
 
@@ -291,7 +294,10 @@ You can adapt these directly for your resume:
 - benchmark the official pipeline against a second recommender baseline
 - add screenshots, a live demo link, and a short case-study section to this README
 
----
+- Persist user accounts and watched history outside session state.
+- Add automated tests for the recommender and revenue pipeline.
+- Introduce offline evaluation metrics for recommendations.
+- Split notebook exploration into dedicated notebooks for EDA and experiments.
 
 ## License
 
