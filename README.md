@@ -67,7 +67,7 @@ python project.py compare --sample-size 100 --top 5
 python project.py evaluate --sample-size 100 --top 5
 python project.py recommend --title "Inception" --top 5
 python project.py revenue --budget 160 --popularity 90 --runtime 148 --vote-average 8.3 --vote-count 22000
-
+```
 
 💾 Persistence
 Stored in .app_data/users.json
