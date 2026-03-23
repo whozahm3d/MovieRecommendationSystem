@@ -297,6 +297,30 @@ Use these notebooks for analysis and storytelling, while keeping `app.py`, `proj
 
 ---
 
+## Resume-ready bullets
+
+You can adapt these directly for your resume:
+
+- Built a movie recommendation system using Python, pandas, scikit-learn, TF-IDF, Truncated SVD, K-Means, and cosine similarity.  
+- Developed a Streamlit application for personalized discovery, dataset analytics, and box-office revenue prediction.  
+- Refactored the project into a reusable Python package and CLI, improving maintainability and reproducibility.  
+- Added a measurable evaluation scorecard for recommendation coverage and revenue-model performance.  
+- Prepared the app for portfolio deployment with documented setup, environment configuration, and Streamlit defaults.  
+
+### Revenue model
+
+## Future improvements
+
+- persist user accounts and watched history outside session state
+- add automated tests for the recommender and revenue pipeline
+- benchmark the official pipeline against a second recommender baseline
+- add screenshots, a live demo link, and a short case-study section to this README
+
+- Persist user accounts and watched history outside session state.
+- Add automated tests for the recommender and revenue pipeline.
+- Introduce offline evaluation metrics for recommendations.
+- Split notebook exploration into dedicated notebooks for EDA and experiments.
+
 ## License
 
 This project is licensed under the [MIT License](LICENSE).
