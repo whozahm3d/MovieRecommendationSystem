@@ -130,6 +130,7 @@ Place dataset files in the project root:
 ```
 Required: tmdb_5000_movies.csv
 Optional: tmdb_5000_credits.csv
+```
 
 Running locally
 ```
