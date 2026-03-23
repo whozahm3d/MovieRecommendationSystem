@@ -3,6 +3,7 @@
 Examples:
     python project.py pipeline
     python project.py summary
+    python project.py compare --sample-size 100 --top 5
     python project.py evaluate --sample-size 100 --top 5
     python project.py recommend --title "Inception" --top 5
     python project.py revenue --budget 160 --popularity 90 --runtime 148 --vote-average 8.3 --vote-count 22000
@@ -17,6 +18,7 @@ import pandas as pd
 
 from movie_recommendation import (
     build_official_recommender,
+    compare_recommenders,
     dataset_summary,
     describe_official_pipeline,
     load_movie_data,
@@ -39,6 +41,10 @@ def create_parser() -> argparse.ArgumentParser:
 
     subparsers.add_parser("pipeline", help="Print the official recommendation pipeline.")
     subparsers.add_parser("summary", help="Print dataset-level summary statistics.")
+
+    compare_parser = subparsers.add_parser("compare", help="Benchmark the official recommender against a baseline.")
+    compare_parser.add_argument("--sample-size", type=int, default=100, help="Number of movie titles used for comparison sampling.")
+    compare_parser.add_argument("--top", type=int, default=5, help="Top-k recommendation cut-off used for comparison metrics.")
 
     evaluate_parser = subparsers.add_parser("evaluate", help="Print measurable recommendation and revenue metrics for the portfolio project.")
     evaluate_parser.add_argument("--sample-size", type=int, default=100, help="Number of movie titles used for recommendation coverage sampling.")
@@ -83,6 +89,14 @@ def run_summary(dataset_dir: Path) -> None:
     print("Top Genres")
     print("----------")
     print(top_genres(df).to_string())
+
+
+def run_compare(dataset_dir: Path, sample_size: int, top_k: int) -> None:
+    df = load_movie_data(dataset_dir)
+    comparison = compare_recommenders(df, sample_size=sample_size, top_k=top_k)
+    print("Recommendation Benchmark")
+    print("------------------------")
+    print(format_table(comparison))
 
 
 def run_evaluate(dataset_dir: Path, sample_size: int, top_k: int) -> None:
@@ -155,6 +169,8 @@ def main() -> None:
         run_pipeline()
     elif args.command == "summary":
         run_summary(dataset_dir)
+    elif args.command == "compare":
+        run_compare(dataset_dir, sample_size=args.sample_size, top_k=args.top)
     elif args.command == "evaluate":
         run_evaluate(dataset_dir, sample_size=args.sample_size, top_k=args.top)
     elif args.command == "recommend":

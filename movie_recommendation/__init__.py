@@ -1,4 +1,5 @@
 from .analysis import (
+    compare_recommenders,
     dataset_summary,
     project_scorecard,
     recommendation_preview,
@@ -25,6 +26,7 @@ __all__ = [
     "RecommenderArtifacts",
     "RevenueModelArtifacts",
     "build_official_recommender",
+    "compare_recommenders",
     "build_recommender",
     "dataset_summary",
     "describe_official_pipeline",

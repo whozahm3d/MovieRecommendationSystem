@@ -1,10 +1,19 @@
 from __future__ import annotations
 
+from difflib import get_close_matches
 from statistics import mean
 
 import pandas as pd
+from sklearn.decomposition import TruncatedSVD
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
 
-from .recommender import RecommenderArtifacts, build_official_recommender, recommend_by_title
+from .recommender import (
+    OFFICIAL_RECOMMENDATION_PIPELINE,
+    RecommenderArtifacts,
+    build_official_recommender,
+    recommend_by_title,
+)
 from .revenue import RevenueModelArtifacts, train_revenue_model
 
 
@@ -38,10 +47,7 @@ def recommendation_preview(artifacts: RecommenderArtifacts, title: str, limit: i
     return results[["title", "vote_average", "release_year", "similarity"]].to_dict("records")
 
 
-def recommendation_quality_summary(df: pd.DataFrame, sample_size: int = 100, top_k: int = 5) -> dict[str, float | int]:
-    artifacts = build_official_recommender(df)
-    sample_rows = df.head(min(sample_size, len(df))).reset_index(drop=True)
-
+def _evaluate_strategy(df: pd.DataFrame, sample_rows: pd.DataFrame, recommend_fn, top_k: int) -> dict[str, float | int]:
     recommended_movie_ids: set[int] = set()
     similarities: list[float] = []
     genre_hit_rates: list[float] = []
@@ -51,7 +57,7 @@ def recommendation_quality_summary(df: pd.DataFrame, sample_size: int = 100, top
     successful_queries = 0
 
     for _, row in sample_rows.iterrows():
-        recommendations = recommend_by_title(artifacts, title=row["title"], limit=top_k)
+        recommendations = recommend_fn(row["title"], top_k)
         if recommendations.empty:
             continue
         successful_queries += 1
@@ -81,7 +87,7 @@ def recommendation_quality_summary(df: pd.DataFrame, sample_size: int = 100, top
     total_genres = max(int(df["genres_list"].explode().nunique()), 1)
     unique_returned_genres = set()
     if recommended_movie_ids:
-        returned = artifacts.movies[artifacts.movies["id"].isin(recommended_movie_ids)]
+        returned = df[df["id"].isin(recommended_movie_ids)]
         for genre_list in returned["genres_list"]:
             unique_returned_genres.update(genre_list)
 
@@ -97,6 +103,77 @@ def recommendation_quality_summary(df: pd.DataFrame, sample_size: int = 100, top
         "mean_year_gap_at_k": mean(year_gaps) if year_gaps else 0.0,
         "average_recommended_rating": mean(recommended_ratings) if recommended_ratings else 0.0,
     }
+
+
+def recommendation_quality_summary(df: pd.DataFrame, sample_size: int = 100, top_k: int = 5) -> dict[str, float | int]:
+    artifacts = build_official_recommender(df)
+    sample_rows = df.head(min(sample_size, len(df))).reset_index(drop=True)
+    return _evaluate_strategy(
+        df.reset_index(drop=True),
+        sample_rows,
+        lambda title, limit: recommend_by_title(artifacts, title=title, limit=limit),
+        top_k,
+    )
+
+
+def _recommend_from_similarity(df: pd.DataFrame, similarity_matrix, title: str, limit: int) -> pd.DataFrame:
+    matches = get_close_matches(title.lower(), df["title"].str.lower().tolist(), n=1, cutoff=0.4)
+    if not matches:
+        return pd.DataFrame()
+    idx = df[df["title"].str.lower() == matches[0]].index[0]
+    candidates = df[df.index != idx].copy()
+    candidates["similarity"] = similarity_matrix[idx, candidates.index]
+    return candidates.sort_values("similarity", ascending=False).head(limit)
+
+
+def compare_recommenders(df: pd.DataFrame, sample_size: int = 100, top_k: int = 5) -> pd.DataFrame:
+    df = df.reset_index(drop=True).copy()
+    sample_rows = df.head(min(sample_size, len(df))).reset_index(drop=True)
+    results: list[dict[str, float | int | str]] = []
+
+    official_artifacts = build_official_recommender(df)
+    official_metrics = _evaluate_strategy(
+        df,
+        sample_rows,
+        lambda title, limit: recommend_by_title(official_artifacts, title=title, limit=limit),
+        top_k,
+    )
+    results.append({"pipeline": "official_clustered_tfidf_svd_cosine", **official_metrics})
+
+    tfidf = TfidfVectorizer(
+        max_features=OFFICIAL_RECOMMENDATION_PIPELINE.max_features,
+        stop_words="english",
+    )
+    tfidf_matrix = tfidf.fit_transform(df["text_features"])
+    tfidf_similarity = cosine_similarity(tfidf_matrix)
+    baseline_metrics = _evaluate_strategy(
+        df,
+        sample_rows,
+        lambda title, limit: _recommend_from_similarity(df, tfidf_similarity, title, limit),
+        top_k,
+    )
+    results.append({"pipeline": "baseline_tfidf_cosine", **baseline_metrics})
+
+    n_features = tfidf_matrix.shape[1]
+    n_samples = tfidf_matrix.shape[0]
+    if n_features > 1 and n_samples > 1:
+        n_components = min(
+            OFFICIAL_RECOMMENDATION_PIPELINE.n_components,
+            n_features - 1,
+            n_samples - 1,
+        )
+        svd = TruncatedSVD(n_components=max(1, n_components), random_state=42)
+        reduced = svd.fit_transform(tfidf_matrix)
+        svd_similarity = cosine_similarity(reduced)
+        ablation_metrics = _evaluate_strategy(
+            df,
+            sample_rows,
+            lambda title, limit: _recommend_from_similarity(df, svd_similarity, title, limit),
+            top_k,
+        )
+        results.append({"pipeline": "ablation_tfidf_svd_cosine", **ablation_metrics})
+
+    return pd.DataFrame(results)
 
 
 def project_scorecard(df: pd.DataFrame, sample_size: int = 100, top_k: int = 5) -> dict[str, float | int]:
