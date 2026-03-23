@@ -8,6 +8,7 @@ import pandas as pd
 
 DEFAULT_MOVIES_FILE = "tmdb_5000_movies.csv"
 DEFAULT_CREDITS_FILE = "tmdb_5000_credits.csv"
+TMDB_POSTER_BASE_URL = "https://image.tmdb.org/t/p/w500"
 
 
 def _parse_name_list(raw_value: object) -> list[str]:
@@ -58,6 +59,11 @@ def load_movie_data(dataset_dir: str | Path = ".") -> pd.DataFrame:
     df["popularity"] = df["popularity"].fillna(df["popularity"].median())
     df["budget"] = df["budget"].replace(0, np.nan).fillna(df["budget"].median())
     df["revenue"] = df["revenue"].replace(0, np.nan)
+    if "poster_path" not in df.columns:
+        df["poster_path"] = None
+    df["poster_url"] = df["poster_path"].apply(
+        lambda path: f"{TMDB_POSTER_BASE_URL}{path}" if isinstance(path, str) and path.strip() else None
+    )
     df["text_features"] = (
         df["overview"].fillna("")
         + " "
