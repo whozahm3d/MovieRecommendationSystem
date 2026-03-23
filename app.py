@@ -44,6 +44,7 @@ TMDB_API_KEY  = os.getenv("TMDB_API_KEY",  "")
 GOOGLE_CLIENT_ID     = os.getenv("GOOGLE_CLIENT_ID",     "")
 GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET", "")
 ALLOW_DEV_EMAIL_VERIFICATION = os.getenv("ALLOW_DEV_EMAIL_VERIFICATION", "0") == "1"
+EMAIL_VERIFICATION_ENABLED = bool(SMTP_EMAIL and SMTP_PASSWORD) or ALLOW_DEV_EMAIL_VERIFICATION
 
 # ─── CONSTANTS ─────────────────────────────────────────────────
 PORTFOLIO_MODE = os.getenv("PORTFOLIO_MODE", "0") == "1"
@@ -162,11 +163,12 @@ def generate_code():
 
 def send_verification_email(to_email: str, code: str) -> bool:
     """Send 6-digit code via SMTP. Returns True on success."""
+    if not EMAIL_VERIFICATION_ENABLED:
+        return False
     if not SMTP_EMAIL or not SMTP_PASSWORD:
         if ALLOW_DEV_EMAIL_VERIFICATION:
             print(f"\n[DEV MODE] Verification code for {to_email}: {code}\n")
             return True
-        st.error("Email verification is not configured. Add SMTP_EMAIL and SMTP_PASSWORD to enable real verification emails.")
         return False
     try:
         msg = MIMEMultipart("alternative")
@@ -200,6 +202,24 @@ def load_data():
         return load_movie_data()
     except FileNotFoundError:
         return None
+
+
+@st.cache_data(show_spinner=False)
+def dataset_poster_lookup():
+    df = load_data()
+    if df is None or "title" not in df.columns:
+        return {}
+    working = df.copy()
+    if "poster_path" not in working.columns:
+        working["poster_path"] = None
+    working["title_key"] = working["title"].astype(str).str.lower().str.strip()
+    lookup = (
+        working.dropna(subset=["title_key"])
+        .drop_duplicates(subset=["title_key"])
+        .set_index("title_key")["poster_path"]
+        .to_dict()
+    )
+    return {key: value for key, value in lookup.items() if isinstance(value, str) and value.strip()}
 
 
 @st.cache_resource(show_spinner=False)
@@ -238,6 +258,12 @@ def fetch_poster(title: str = "", movie=None, df=None) -> str:
             poster_url = _poster_url_from_path(matched_row.get("poster_path"))
             if poster_url:
                 return poster_url
+
+    if title:
+        poster_path = dataset_poster_lookup().get(str(title).lower().strip())
+        poster_url = _poster_url_from_path(poster_path)
+        if poster_url:
+            return poster_url
 
     if title in WIKI_POSTERS:
         return WIKI_POSTERS[title]
@@ -541,27 +567,41 @@ def page_auth():
             name  = st.text_input("Full name", placeholder="Your name", key="su_name")
             email = st.text_input("Email address", placeholder="you@example.com", key="su_email")
             pwd   = st.text_input("Password (min. 8 chars)", type="password", placeholder="••••••••", key="su_pass")
-            if st.button("Create Account & Verify Email", use_container_width=True):
+            signup_label = "Create Account & Verify Email" if EMAIL_VERIFICATION_ENABLED else "Create Account"
+            if st.button(signup_label, use_container_width=True):
                 if name and email and len(pwd) >= 8:
                     if get_registered_user(email) is not None:
                         st.error("An account with this email already exists. Please sign in instead.")
                         return
-                    code = generate_code()
-                    st.session_state.verify_code    = code
-                    st.session_state.verify_email   = email
-                    st.session_state.verify_attempts = 0
-                    st.session_state.verify_locked_until = None
-                    st.session_state.signup_data    = {"name": name, "email": email, "password": pwd, "provider": "email", "interests": []}
-                    sent = send_verification_email(email, code)
-                    if sent:
-                        st.session_state.auth_step = "verify"
+                    signup_data = {"name": name, "email": email, "password": pwd, "provider": "email", "interests": []}
+                    st.session_state.signup_data = signup_data
+                    if EMAIL_VERIFICATION_ENABLED:
+                        code = generate_code()
+                        st.session_state.verify_code    = code
+                        st.session_state.verify_email   = email
+                        st.session_state.verify_attempts = 0
+                        st.session_state.verify_locked_until = None
+                        sent = send_verification_email(email, code)
+                        if sent:
+                            st.session_state.auth_step = "verify"
+                            st.rerun()
+                    else:
+                        register_user_account(signup_data)
+                        st.session_state.user = {
+                            "name": signup_data.get("name", ""),
+                            "email": signup_data.get("email", ""),
+                            "provider": signup_data.get("provider", "email"),
+                        }
+                        st.session_state.auth_step = "interests"
+                        st.success("Account created. Email verification will automatically activate when SMTP is configured.")
                         st.rerun()
                 else:
                     st.error("Please fill in all fields. Password must be at least 8 characters.")
             st.divider()
-            st.caption("Create an account, verify your email, and then personalise your recommendations.")
-            if not SMTP_EMAIL and not ALLOW_DEV_EMAIL_VERIFICATION:
-                st.caption("SMTP credentials are required for real email verification in this environment.")
+            if EMAIL_VERIFICATION_ENABLED:
+                st.caption("Create an account, verify your email, and then personalise your recommendations.")
+            else:
+                st.caption("Create an account now. Email verification will activate automatically after SMTP is configured.")
             st.caption("Google sign-up can be added later through OAuth configuration if needed.")
 
 
@@ -639,7 +679,7 @@ def page_home(df):
         {"title":"The Dark Knight","year":2008,"rating":"9.0","tagline":"Why so serious?","genre":"Action · Crime"},
     ]
     hero = hero_movies[datetime.now().second % len(hero_movies)]
-    poster_url = fetch_poster(hero["title"])
+    poster_url = fetch_poster(hero["title"], df=df)
 
     col_h, col_p = st.columns([3, 1])
     with col_h:
