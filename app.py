@@ -43,6 +43,7 @@ SMTP_PASSWORD = os.getenv("SMTP_PASSWORD", "")
 TMDB_API_KEY  = os.getenv("TMDB_API_KEY",  "")
 GOOGLE_CLIENT_ID     = os.getenv("GOOGLE_CLIENT_ID",     "")
 GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET", "")
+ALLOW_DEV_EMAIL_VERIFICATION = os.getenv("ALLOW_DEV_EMAIL_VERIFICATION", "0") == "1"
 
 # ─── CONSTANTS ─────────────────────────────────────────────────
 PORTFOLIO_MODE = os.getenv("PORTFOLIO_MODE", "0") == "1"
@@ -162,9 +163,11 @@ def generate_code():
 def send_verification_email(to_email: str, code: str) -> bool:
     """Send 6-digit code via SMTP. Returns True on success."""
     if not SMTP_EMAIL or not SMTP_PASSWORD:
-        # Dev mode — print to terminal only
-        print(f"\n[DEV MODE] Verification code for {to_email}: {code}\n")
-        return True
+        if ALLOW_DEV_EMAIL_VERIFICATION:
+            print(f"\n[DEV MODE] Verification code for {to_email}: {code}\n")
+            return True
+        st.error("Email verification is not configured. Add SMTP_EMAIL and SMTP_PASSWORD to enable real verification emails.")
+        return False
     try:
         msg = MIMEMultipart("alternative")
         msg["Subject"] = "Cinema to Watch — Your verification code"
@@ -478,8 +481,8 @@ def page_auth():
                     send_verification_email(email, new_code)
                     st.success("New code sent!")
 
-            if not SMTP_EMAIL:
-                st.caption("Development mode: check the terminal for the code. Set SMTP_EMAIL in .env for real emails.")
+            if ALLOW_DEV_EMAIL_VERIFICATION and not SMTP_EMAIL:
+                st.caption("Development override is enabled, so the verification code is printed in the terminal.")
             return
 
         # ── INTERESTS ───────────────────────────────────────
@@ -557,6 +560,8 @@ def page_auth():
                     st.error("Please fill in all fields. Password must be at least 8 characters.")
             st.divider()
             st.caption("Create an account, verify your email, and then personalise your recommendations.")
+            if not SMTP_EMAIL and not ALLOW_DEV_EMAIL_VERIFICATION:
+                st.caption("SMTP credentials are required for real email verification in this environment.")
             st.caption("Google sign-up can be added later through OAuth configuration if needed.")
 
 
