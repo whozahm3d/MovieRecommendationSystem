@@ -9,7 +9,7 @@ This repository is now structured to support four portfolio goals:
 - **Version 3 — Make it deployable:** Streamlit config, environment guidance, and deployment steps.
 - **Version 4 — Add one more project:** a roadmap for pairing this app with a second portfolio project that fills skill gaps.
 
----
+This repository is now structured to support four portfolio goals:
 
 ## Why this project is worth showing employers
 
@@ -299,6 +299,30 @@ You can adapt these directly for your resume:
 - add screenshots, a live demo link, and a short case-study section to this README
 
 ---
+
+## Resume-ready bullets
+
+You can adapt these directly for your resume:
+
+- Built a movie recommendation system using Python, pandas, scikit-learn, TF-IDF, Truncated SVD, K-Means, and cosine similarity.  
+- Developed a Streamlit application for personalized discovery, dataset analytics, and box-office revenue prediction.  
+- Refactored the project into a reusable Python package and CLI, improving maintainability and reproducibility.  
+- Added a measurable evaluation scorecard for recommendation coverage and revenue-model performance.  
+- Prepared the app for portfolio deployment with documented setup, environment configuration, and Streamlit defaults.  
+
+### Revenue model
+
+## Future improvements
+
+- persist user accounts and watched history outside session state
+- add automated tests for the recommender and revenue pipeline
+- benchmark the official pipeline against a second recommender baseline
+- add screenshots, a live demo link, and a short case-study section to this README
+
+- Persist user accounts and watched history outside session state.
+- Add automated tests for the recommender and revenue pipeline.
+- Introduce offline evaluation metrics for recommendations.
+- Split notebook exploration into dedicated notebooks for EDA and experiments.
 
 ## License
 
