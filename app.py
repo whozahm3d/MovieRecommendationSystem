@@ -613,6 +613,7 @@ def render_sidebar():
                 "watched_ids",
                 "interests",
                 "page",
+                "selected_movie_id",
             ]:
                 st.session_state.pop(key, None)
             init_state()
@@ -694,7 +695,7 @@ def page_home(df):
 #  FOR YOU
 # ══════════════════════════════════════════════════════════════
 def page_for_you(df):
-    user_name = st.session_state.user.get("name","").split()[0]
+    user_name = (st.session_state.user.get("name", "").split() or ["User"])[0]
     st.markdown(f'<div class="page-title">Welcome back, {user_name}</div>', unsafe_allow_html=True)
     st.markdown('<div class="page-sub">Personalised picks based on your real-time activity and taste profile.</div>', unsafe_allow_html=True)
     render_movie_details(df)
