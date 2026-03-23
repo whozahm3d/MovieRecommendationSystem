@@ -56,7 +56,7 @@ def build_official_recommender(df: pd.DataFrame) -> RecommenderArtifacts:
     svd = TruncatedSVD(n_components=pipeline.n_components, random_state=42)
     reduced = svd.fit_transform(tfidf_matrix)
     kmeans = KMeans(n_clusters=pipeline.n_clusters, random_state=42, n_init=10)
-    movies = df.copy()
+    movies = df.reset_index(drop=True).copy()
     movies["cluster"] = kmeans.fit_predict(reduced)
     similarity_matrix = cosine_similarity(reduced)
     return RecommenderArtifacts(

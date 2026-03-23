@@ -3,6 +3,7 @@
 Examples:
     python project.py pipeline
     python project.py summary
+    python project.py evaluate --sample-size 100 --top 5
     python project.py recommend --title "Inception" --top 5
     python project.py revenue --budget 160 --popularity 90 --runtime 148 --vote-average 8.3 --vote-count 22000
 """
@@ -19,6 +20,7 @@ from movie_recommendation import (
     dataset_summary,
     describe_official_pipeline,
     load_movie_data,
+    project_scorecard,
     recommend_by_title,
     top_genres,
     train_revenue_model,
@@ -37,6 +39,10 @@ def create_parser() -> argparse.ArgumentParser:
 
     subparsers.add_parser("pipeline", help="Print the official recommendation pipeline.")
     subparsers.add_parser("summary", help="Print dataset-level summary statistics.")
+
+    evaluate_parser = subparsers.add_parser("evaluate", help="Print measurable recommendation and revenue metrics for the portfolio project.")
+    evaluate_parser.add_argument("--sample-size", type=int, default=100, help="Number of movie titles used for recommendation coverage sampling.")
+    evaluate_parser.add_argument("--top", type=int, default=5, help="Top-k recommendation cut-off used for sampling metrics.")
 
     recommend_parser = subparsers.add_parser("recommend", help="Generate movie recommendations with the official pipeline.")
     recommend_parser.add_argument("--title", required=True, help="Movie title to match against the dataset.")
@@ -77,6 +83,26 @@ def run_summary(dataset_dir: Path) -> None:
     print("Top Genres")
     print("----------")
     print(top_genres(df).to_string())
+
+
+def run_evaluate(dataset_dir: Path, sample_size: int, top_k: int) -> None:
+    df = load_movie_data(dataset_dir)
+    scorecard = project_scorecard(df, sample_size=sample_size, top_k=top_k)
+
+    print("Portfolio Scorecard")
+    print("-------------------")
+    print(f"Movies: {scorecard['movies']:,}")
+    print(f"Genres: {scorecard['genres']}")
+    print(f"Average Rating: {scorecard['average_rating']:.2f}")
+    print(f"Release Window: {scorecard['start_year']}–{scorecard['end_year']}")
+    print(f"Sample Size: {scorecard['sample_size']}")
+    print(f"Top-k: {scorecard['top_k']}")
+    print(f"Titles With Results: {scorecard['titles_with_results']}")
+    print(f"Catalog Coverage@k: {scorecard['catalog_coverage_at_k']:.2%}")
+    print(f"Genre Coverage@k: {scorecard['genre_coverage_at_k']:.2%}")
+    print(f"Mean Similarity@k: {scorecard['mean_similarity_at_k']:.3f}")
+    print(f"Revenue R²: {scorecard['revenue_r2']:.2f}")
+    print(f"Revenue MAE: ${scorecard['revenue_mae']:,.0f}")
 
 
 def run_recommend(dataset_dir: Path, title: str, genres: list[str], top: int) -> None:
@@ -123,6 +149,8 @@ def main() -> None:
         run_pipeline()
     elif args.command == "summary":
         run_summary(dataset_dir)
+    elif args.command == "evaluate":
+        run_evaluate(dataset_dir, sample_size=args.sample_size, top_k=args.top)
     elif args.command == "recommend":
         run_recommend(dataset_dir, title=args.title, genres=args.genre, top=args.top)
     elif args.command == "revenue":

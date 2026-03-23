@@ -1,4 +1,11 @@
-from .analysis import dataset_summary, recommendation_preview, revenue_summary, top_genres
+from .analysis import (
+    dataset_summary,
+    project_scorecard,
+    recommendation_preview,
+    recommendation_quality_summary,
+    revenue_summary,
+    top_genres,
+)
 from .data import load_movie_data
 from .recommender import (
     OFFICIAL_RECOMMENDATION_PIPELINE,
@@ -23,8 +30,10 @@ __all__ = [
     "describe_official_pipeline",
     "load_movie_data",
     "personalized_recommendations",
+    "project_scorecard",
     "recommend_by_title",
     "recommendation_preview",
+    "recommendation_quality_summary",
     "revenue_summary",
     "top_genres",
     "train_revenue_model",
