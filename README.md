@@ -70,13 +70,16 @@ python project.py revenue --budget 160 --popularity 90 --runtime 148 --vote-aver
 ```
 
 💾 Persistence
+```
 Stored in .app_data/users.json
 Saves user accounts, interests, and watched history
 Ignored by Git to keep repository clean
+```
+
 📊 Evaluation & Metrics
 
 This project includes real measurable evaluation, not just UI.
-
+```
 Scorecard Metrics
 Catalog Coverage@k
 Genre Coverage@k
@@ -86,12 +89,16 @@ Mean Similarity@k
 Mean Year Gap@k
 Average Recommended Rating
 Revenue Model: R² / MAE / RMSE
-Why this matters
+```
 
+Why this matters
+```
 Most portfolio projects stop at “it works.”
 This project demonstrates evaluation, comparison, and ML reasoning — key expectations in real-world roles.
+```
 
 🗂️ Project Structure
+```
 MovieRecommendationSystem/
 ├── app.py
 ├── project.py
@@ -108,36 +115,53 @@ MovieRecommendationSystem/
 ├── .gitignore
 ├── requirements.txt
 └── tmdb_5000_movies.csv
+```
 📈 Suggested Visuals (for Portfolio)
 
 Add screenshots like:
-
+```
 Genre distribution chart
 Movie release trends
 Rating histogram
 Recommendation comparison table
 Revenue model feature importance
+```
+
 ⚙️ Installation
+```
 pip install -r requirements.txt
+```
+
 📂 Dataset
 
 Place dataset files in the root directory:
-
+```
 Required: tmdb_5000_movies.csv
 Optional: tmdb_5000_credits.csv (improves recommendations)
+```
+
 ▶️ Running the Project
+```
 Run Streamlit App
 streamlit run app.py
+```
+
 CLI Example
+```
 python project.py recommend --title "Inception"
+```
 🚀 Deployment
+```
 Streamlit Community Cloud
 Push project to GitHub
 Go to Streamlit Cloud
 Select app.py
 Add dataset file
 Deploy
+```
+
 💡 Key Skills Demonstrated
+```
 Machine Learning (scikit-learn)
 NLP (TF-IDF vectorization)
 Dimensionality Reduction (SVD)
@@ -148,27 +172,24 @@ Model Evaluation & Benchmarking
 Streamlit App Development
 CLI Tool Development
 Project Structuring & Packaging
+```
+
 🏆 Why This Project Stands Out
+```
 Goes beyond tutorials → real product-style system
 Includes evaluation metrics (rare in student projects)
 Combines multiple ML use cases (recommendation + regression)
 Demonstrates ML + UI + engineering integration
+```
+
 📜 License
-
+```
 This project is licensed under the MIT License.
-
+```
 ⭐ Support
-
+```
 If you found this project helpful, consider giving it a ⭐ on GitHub!
-
-
----
-
-🔥 This version is:
-- Clean  
-- Professional  
-- Recruiter-focused  
-- Ready for GitHub  
+```
 
 ---
 
