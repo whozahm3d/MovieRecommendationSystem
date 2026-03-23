@@ -303,6 +303,27 @@ You can adapt these directly for your resume:
 
 ---
 
+## Resume-ready bullets
+
+You can adapt these directly for your resume:
+
+- Built a movie recommendation system using Python, pandas, scikit-learn, TF-IDF, Truncated SVD, K-Means, and cosine similarity.  
+- Developed a Streamlit application for personalized discovery, dataset analytics, and box-office revenue prediction.  
+- Refactored the project into a reusable Python package and CLI, improving maintainability and reproducibility.  
+- Added a measurable evaluation scorecard for recommendation coverage and revenue-model performance.  
+- Prepared the app for portfolio deployment with documented setup, environment configuration, and Streamlit defaults.  
+
+---
+
+## Future improvements
+
+- persist user accounts and watched history outside session state
+- add automated tests for the recommender and revenue pipeline
+- benchmark the official pipeline against a second recommender baseline
+- add screenshots, a live demo link, and a short case-study section to this README
+
+---
+
 ## Version 4 — Add one more project
 
 To become a stronger job-ready portfolio, pair this repo with **one additional project** that shows a different strength.

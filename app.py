@@ -45,7 +45,7 @@ GOOGLE_CLIENT_ID     = os.getenv("GOOGLE_CLIENT_ID",     "")
 GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET", "")
 
 # ─── CONSTANTS ─────────────────────────────────────────────────
-PORTFOLIO_MODE = os.getenv("PORTFOLIO_MODE", "1") == "1"
+PORTFOLIO_MODE = os.getenv("PORTFOLIO_MODE", "0") == "1"
 
 def default_user():
     if PORTFOLIO_MODE:
@@ -143,6 +143,7 @@ def init_state():
         "interests": [],
         "page": "Home",
         "selected_movie_id": None,
+        "registered_users": {},
     }
     for k, v in defaults.items():
         if k not in st.session_state:
@@ -275,6 +276,36 @@ def format_currency(value):
     return f"${value/1_000_000:,.0f}M"
 
 
+def normalize_external_url(url) -> str | None:
+    if not isinstance(url, str):
+        return None
+    cleaned = url.strip()
+    if not cleaned or cleaned.lower() == "nan":
+        return None
+    if not re.match(r"^https?://", cleaned, re.IGNORECASE):
+        cleaned = f"https://{cleaned}"
+    return cleaned
+
+
+def register_user_account(user_data: dict):
+    email = user_data.get("email", "").strip().lower()
+    if not email:
+        return
+    st.session_state.registered_users[email] = {
+        "name": user_data.get("name", ""),
+        "email": user_data.get("email", ""),
+        "password": user_data.get("password", ""),
+        "provider": user_data.get("provider", "email"),
+        "interests": user_data.get("interests", []),
+    }
+
+
+def get_registered_user(email: str) -> dict | None:
+    if not email:
+        return None
+    return st.session_state.registered_users.get(email.strip().lower())
+
+
 def set_selected_movie(movie_id):
     st.session_state.selected_movie_id = int(movie_id) if pd.notna(movie_id) else None
 
@@ -301,7 +332,7 @@ def render_movie_details(df):
     runtime = f"{int(selected_movie['runtime'])} min" if pd.notna(selected_movie.get("runtime")) else "Runtime unavailable"
     rating = f"{selected_movie.get('vote_average', 0):.1f}/10"
     language = str(selected_movie.get("original_language", "n/a")).upper()
-    homepage = selected_movie.get("homepage")
+    homepage = normalize_external_url(selected_movie.get("homepage"))
 
     col_poster, col_details = st.columns([1, 2.1])
     with col_poster:
@@ -424,7 +455,12 @@ def page_auth():
                 if st.button("Verify and Continue", use_container_width=True):
                     if code_input.strip() == st.session_state.verify_code:
                         data = st.session_state.signup_data
-                        st.session_state.user = data
+                        register_user_account(data)
+                        st.session_state.user = {
+                            "name": data.get("name", ""),
+                            "email": data.get("email", ""),
+                            "provider": data.get("provider", "email"),
+                        }
                         st.session_state.verify_attempts = 0
                         st.session_state.auth_step = "interests"
                         st.rerun()
@@ -437,7 +473,7 @@ def page_auth():
                         else:
                             err.error(f"Incorrect code. {3 - attempts} attempt(s) remaining.")
             with col_r:
-                if st.button("🔄 Resend Code", use_container_width=True):
+                if st.button("Resend Code", use_container_width=True):
                     new_code = generate_code()
                     st.session_state.verify_code = new_code
                     st.session_state.verify_attempts = 0
@@ -455,8 +491,12 @@ def page_auth():
             selected = st.multiselect("Genres", ALL_GENRES, default=[], key="genre_picker")
             col_a, col_b = st.columns(2)
             with col_a:
-                if st.button("Continue →", use_container_width=True, disabled=len(selected) == 0):
+                if st.button("Continue", use_container_width=True, disabled=len(selected) == 0):
                     st.session_state.interests = selected
+                    if st.session_state.user.get("email"):
+                        registered_user = get_registered_user(st.session_state.user["email"])
+                        if registered_user is not None:
+                            registered_user["interests"] = selected
                     st.session_state.authenticated = True
                     st.session_state.page = "Home"
                     st.rerun()
@@ -475,16 +515,26 @@ def page_auth():
             password = st.text_input("Password", type="password", placeholder="••••••••", key="li_pass")
             if st.button("Sign In", use_container_width=True):
                 if email and password:
-                    name = email.split("@")[0].replace(".", " ").replace("_", " ").title()
-                    st.session_state.user = {"name": name, "email": email, "provider": "email"}
-                    st.session_state.authenticated = True
-                    st.session_state.page = "Home"
-                    st.rerun()
+                    registered_user = get_registered_user(email)
+                    if registered_user is None:
+                        st.error("Account not found. Please create an account first.")
+                    elif registered_user.get("password") != password:
+                        st.error("Incorrect password. Please try again.")
+                    else:
+                        st.session_state.user = {
+                            "name": registered_user.get("name", ""),
+                            "email": registered_user.get("email", email),
+                            "provider": registered_user.get("provider", "email"),
+                        }
+                        st.session_state.interests = registered_user.get("interests", [])
+                        st.session_state.authenticated = True
+                        st.session_state.page = "Home"
+                        st.rerun()
                 else:
                     st.error("Please fill in all fields.")
             st.divider()
-            st.caption("Demo authentication only — this portfolio build does not persist users or validate passwords against a backend.")
-            st.caption("Google sign-in: set GOOGLE_CLIENT_ID in .env and integrate via streamlit-oauth.")
+            st.caption("Use the account you created in this session to sign in.")
+            st.caption("Google sign-in can be added later through OAuth configuration if needed.")
 
         with tab_signup:
             name  = st.text_input("Full name", placeholder="Your name", key="su_name")
@@ -492,12 +542,15 @@ def page_auth():
             pwd   = st.text_input("Password (min. 8 chars)", type="password", placeholder="••••••••", key="su_pass")
             if st.button("Create Account & Verify Email", use_container_width=True):
                 if name and email and len(pwd) >= 8:
+                    if get_registered_user(email) is not None:
+                        st.error("An account with this email already exists. Please sign in instead.")
+                        return
                     code = generate_code()
                     st.session_state.verify_code    = code
                     st.session_state.verify_email   = email
                     st.session_state.verify_attempts = 0
                     st.session_state.verify_locked_until = None
-                    st.session_state.signup_data    = {"name": name, "email": email, "provider": "email"}
+                    st.session_state.signup_data    = {"name": name, "email": email, "password": pwd, "provider": "email", "interests": []}
                     sent = send_verification_email(email, code)
                     if sent:
                         st.session_state.auth_step = "verify"
@@ -505,8 +558,8 @@ def page_auth():
                 else:
                     st.error("Please fill in all fields. Password must be at least 8 characters.")
             st.divider()
-            st.caption("Demo sign-up only — replace this with real backend auth before presenting it as a production feature.")
-            st.caption("Google sign-up: configure GOOGLE_CLIENT_ID in .env.")
+            st.caption("Create an account, verify your email, and then personalise your recommendations.")
+            st.caption("Google sign-up can be added later through OAuth configuration if needed.")
 
 
 # ══════════════════════════════════════════════════════════════
@@ -603,9 +656,10 @@ def page_home(df):
     # Top rated grid
     st.markdown('<div class="section-hdr">Top Rated in Library</div>', unsafe_allow_html=True)
     if df is not None:
+        featured_columns = [column for column in ["id", "title", "poster_path"] if column in df.columns]
         featured_movies = (
             df.sort_values(["vote_average", "vote_count"], ascending=[False, False])
-            .head(8)[["id", "title", "poster_path"]]
+            .head(8)[featured_columns]
             .to_dict("records")
         )
     else:
@@ -688,9 +742,10 @@ def page_for_you(df):
 
 def _show_wiki_grid(df=None):
     if df is not None:
+        showcase_columns = [column for column in ["id", "title", "poster_path"] if column in df.columns]
         showcase = (
             df.sort_values(["popularity", "vote_average"], ascending=[False, False])
-            .head(10)
+            .head(10)[showcase_columns]
             .to_dict("records")
         )
     else:
