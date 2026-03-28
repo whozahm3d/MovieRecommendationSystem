@@ -13,8 +13,8 @@ This project combines **machine learning, product design, and deployment practic
 > Added screenshot slots below.  
 > If your filenames are different, just update the paths.
 
-![App Screenshot 1](./screenshots/ss1.png)
-![App Screenshot 2](./screenshots/ss2.png)
+![App overview](images/app_overview.png)
+![movie_overview](images/movie_overview.png)
 
 
 ## 📌 Overview
