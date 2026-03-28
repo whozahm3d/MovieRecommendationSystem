@@ -8,6 +8,14 @@
 A **production-style movie discovery system** built on the TMDB 5000 dataset.  
 This project combines **machine learning, product design, and deployment practices** into a single portfolio-ready application.
 
+## 🖼️ App Screenshots
+
+> Added screenshot slots below.  
+> If your filenames are different, just update the paths.
+
+![App Screenshot 1](./screenshots/ss1.png)
+![App Screenshot 2](./screenshots/ss2.png)
+
 
 ## 📌 Overview
 
