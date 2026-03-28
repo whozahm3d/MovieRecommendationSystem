@@ -10,10 +10,9 @@ This project combines **machine learning, product design, and deployment practic
 
 ## 🖼️ App Screenshots
 
-> Added screenshot slots below.  
-> If your filenames are different, just update the paths.
-
 ![App overview](images/app_overview.png)
+
+
 ![movie_overview](images/movie_overview.png)
 
 
