@@ -8,14 +8,6 @@
 A **production-style movie discovery system** built on the TMDB 5000 dataset.  
 This project combines **machine learning, product design, and deployment practices** into a single portfolio-ready application.
 
-## 🖼️ App Screenshots
-
-![App overview](images/app_overview.png)
-
-
-![movie_overview](images/movie_overview.png)
-
-
 ## 📌 Overview
 
 This is not just a basic recommender system — it is a **complete ML product** featuring:
@@ -26,6 +18,8 @@ This is not just a basic recommender system — it is a **complete ML product** 
 - 💰 Revenue prediction model  
 - ⚙️ CLI for reproducible workflows  
 - 📈 Benchmarking & evaluation metrics  
+
+![App overview](images/app_overview.png)
 
 ---
 
@@ -118,6 +112,8 @@ MovieRecommendationSystem/
 └── tmdb_5000_movies.csv
 ```
 📈 Suggested Visuals (for Portfolio)
+
+![movie_overview](images/movie_overview.png)
 
 Add screenshots like:
 ```
