@@ -111,14 +111,13 @@ MovieRecommendationSystem/
 ├── requirements.txt
 └── tmdb_5000_movies.csv
 ```
-📈 Suggested Visuals (for Portfolio)
 
-![movie_overview](images/movie_overview.png)
-
-Add screenshots like:
+Added visuals like:
 ```
-Genre distribution chart
+Sign up Page
+
 Movie release trends
+![movie_overview](images/movie_overview.png)
 Rating histogram
 Recommendation comparison table
 Revenue model feature importance
