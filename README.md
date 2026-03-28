@@ -113,15 +113,16 @@ MovieRecommendationSystem/
 ```
 
 Added visuals like:
-```
-Sign up Page
 
-Movie release trends
+1. Sign up Page:
+images/signUp_overview.png
+
+2. Movie release trends
 ![movie_overview](images/movie_overview.png)
+
 Rating histogram
 Recommendation comparison table
 Revenue model feature importance
-```
 
 ⚙️ Installation
 ```
