@@ -115,7 +115,7 @@ MovieRecommendationSystem/
 Added visuals like:
 
 1. Sign up Page:
-images/signUp_overview.png
+![sign_up_overview](images/signUp_overview.png)
 
 2. Movie release trends
 ![movie_overview](images/movie_overview.png)
