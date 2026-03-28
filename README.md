@@ -119,10 +119,11 @@ Added visuals like:
 
 2. Movie release trends
 ![movie_overview](images/movie_overview.png)
-
+```
 Rating histogram
 Recommendation comparison table
 Revenue model feature importance
+```
 
 ⚙️ Installation
 ```
