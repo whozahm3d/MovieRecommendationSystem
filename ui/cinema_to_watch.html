@@ -83,7 +83,7 @@ a { color: inherit; }
   background: var(--bg);
 }
 .auth-left {
-  position: relative; padding: 42px 48px; overflow: hidden;
+  position: relative; padding: 42px 48px; overflow: hidden; min-height: 100vh;
   background: linear-gradient(160deg, #0a0d13 0%, #090b10 100%);
 }
 body.light .auth-left { background: linear-gradient(160deg, #efe6da 0%, #f4efe7 100%); }
@@ -115,7 +115,7 @@ body.light .feature-item { background: rgba(255,255,255,0.55); border-color: rgb
 .auth-right {
   background: linear-gradient(180deg, var(--bg2) 0%, var(--panel) 100%);
   border-left: 1px solid rgba(255,255,255,0.05);
-  padding: 36px 42px 24px;
+  padding: 36px 42px 24px; min-height: 100vh;
   overflow: visible;
 }
 .auth-step { display: none; }
@@ -361,6 +361,21 @@ input[type="range"] { width: 100%; accent-color: var(--gold2); }
 .tour-highlight { position: relative; z-index: 131 !important; outline: 3px solid var(--gold2); outline-offset: 6px; border-radius: 14px; }
 .tour-launch { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 12px; }
 .profile-form { display: grid; gap: 12px; }
+.profile-meta {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 16px;
+  text-align: left;
+}
+.profile-meta-item {
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: rgba(255,255,255,0.02);
+  font-size: 12px;
+  color: var(--muted);
+}
+.profile-meta-item strong { color: var(--text); font-weight: 600; }
 .theme-toggle-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 12px; }
 .theme-toggle-row .ghost-btn.active-theme { border-color: var(--gold2); color: var(--gold2); background: rgba(214,195,165,0.14); }
 .detail-modal-card {
@@ -476,7 +491,7 @@ input[type="range"] { width: 100%; accent-color: var(--gold2); }
           </div>
         </div>
         <button class="btn-primary" id="login-btn" type="button">Continue</button>
-        <button class="btn-secondary" id="guest-btn" type="button">Enter demo as guest</button>
+        <button class="btn-secondary" id="guest-btn" type="button">Continue as guest</button>
       </div>
 
       <div id="auth-signup" class="tab-panel">
@@ -490,6 +505,14 @@ input[type="range"] { width: 100%; accent-color: var(--gold2); }
           <label class="field-label" for="su-email">Email</label>
           <input class="input" id="su-email" type="email" placeholder="jamie@example.com">
           <div class="field-help" id="su-email-help"></div>
+        </div>
+        <div class="field-group">
+          <label class="field-label" for="su-dob">Date of birth</label>
+          <input class="input" id="su-dob" type="date">
+        </div>
+        <div class="field-group">
+          <label class="field-label" for="su-phone">Phone number</label>
+          <input class="input" id="su-phone" type="tel" placeholder="+1 555 123 4567">
         </div>
         <div class="field-group">
           <label class="field-label" for="su-pass">Password</label>
@@ -506,7 +529,7 @@ input[type="range"] { width: 100%; accent-color: var(--gold2); }
           </div>
           <div class="field-help" id="su-pass-help"></div>
         </div>
-        <label class="checkbox-row"><input id="terms" type="checkbox"><span class="muted">I agree to the demo terms and want my preferences stored in this browser.</span></label>
+        <label class="checkbox-row"><input id="terms" type="checkbox"><span class="muted">I agree to the terms and want my preferences stored in this browser.</span></label>
         <button class="btn-primary" id="signup-btn" type="button">Create account</button>
       </div>
     </div>
@@ -519,13 +542,13 @@ input[type="range"] { width: 100%; accent-color: var(--gold2); }
       </div>
       <div class="section-logo">Verify email</div>
       <div class="section-title">One more step</div>
-      <p class="section-sub">A demo verification code was generated for <strong id="verify-email"></strong>. It is stored locally so reloading this page will not lose your signup progress.</p>
+      <p class="section-sub">A verification code was generated for <strong id="verify-email"></strong>. It is stored locally so reloading this page will not lose your signup progress.</p>
       <div class="alert" id="verify-alert"></div>
       <div class="otp-row" id="otp-row"></div>
       <button class="btn-primary" id="verify-btn" type="button">Verify &amp; continue</button>
       <button class="btn-secondary" id="verify-back-btn" type="button">Back</button>
       <div class="dev-box">
-        <div class="muted" style="font-size:11px;text-transform:uppercase;letter-spacing:.08em">Demo code</div>
+        <div class="muted" style="font-size:11px;text-transform:uppercase;letter-spacing:.08em">Verification code</div>
         <div class="dev-code" id="dev-code">000000</div>
         <div class="muted" style="font-size:11px">In production this would be delivered by email.</div>
       </div>
@@ -642,7 +665,7 @@ input[type="range"] { width: 100%; accent-color: var(--gold2); }
         </div>
         <div class="pill-row" style="margin-bottom:14px;" id="genre-filter-row"></div>
         <div class="info-box" style="margin-bottom:16px;">
-          <div class="section-header" style="margin-bottom:8px;"><h3>How the demo works</h3><button class="ghost-btn small" id="export-csv-btn" type="button">Export CSV</button></div>
+          <div class="section-header" style="margin-bottom:8px;"><h3>How recommendations work</h3><button class="ghost-btn small" id="export-csv-btn" type="button">Export CSV</button></div>
           <div class="taste-copy" id="search-context">Pick a movie title or type a concept like “space survival drama”. The app vectorizes title, tagline, genres, and overview text in your browser, then ranks cosine similarity across the bundled snapshot.</div>
         </div>
         <div id="search-feedback" class="muted" style="margin-bottom:12px;"></div>
@@ -691,7 +714,7 @@ input[type="range"] { width: 100%; accent-color: var(--gold2); }
 
       <section id="page-revenue" class="page">
         <div class="page-title">Revenue Predictor</div>
-        <p class="page-sub">A lightweight front-end simulation driven by the bundled dataset’s ranges, ideal for demoing the modeling story.</p>
+        <p class="page-sub">A lightweight front-end simulation driven by the bundled dataset’s ranges for production-style scenario planning.</p>
         <div class="metric-grid" style="grid-template-columns:repeat(3,1fr);">
           <div class="metric-card"><div class="metric-value">0.72</div><div class="metric-label">R² score</div></div>
           <div class="metric-card"><div class="metric-value">$68M</div><div class="metric-label">Mean abs. error</div></div>
@@ -724,6 +747,10 @@ input[type="range"] { width: 100%; accent-color: var(--gold2); }
               <div style="width:68px;height:68px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--gold2);color:#130f0a;font-weight:800;font-size:22px;margin:0 auto 12px;" id="profile-avatar">P</div>
               <div style="text-align:center;font-family:'Bebas Neue',sans-serif;font-size:24px;letter-spacing:1px;" id="profile-name">Guest User</div>
               <div class="muted" style="text-align:center;font-size:12px;margin-bottom:16px;" id="profile-email">guest@cinematowatch.local</div>
+              <div class="profile-meta">
+                <div class="profile-meta-item"><strong>Date of birth:</strong> <span id="profile-dob-display">Not set</span></div>
+                <div class="profile-meta-item"><strong>Phone:</strong> <span id="profile-phone-display">Not set</span></div>
+              </div>
               <div class="metric-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:0;">
                 <div class="metric-card"><div class="metric-value" id="profile-watched">0</div><div class="metric-label">Watched</div></div>
                 <div class="metric-card"><div class="metric-value" id="profile-activity">0</div><div class="metric-label">Activity</div></div>
@@ -739,10 +766,11 @@ input[type="range"] { width: 100%; accent-color: var(--gold2); }
                 <div class="field-group"><label class="field-label" for="profile-phone-input">Phone number</label><input class="input" id="profile-phone-input" type="tel" placeholder="+1 555 123 4567"></div>
                 <div class="field-group"><label class="field-label" for="profile-pass-input">New password</label><input class="input" id="profile-pass-input" type="password" placeholder="Minimum 8 characters"></div>
                 <div class="field-group"><label class="field-label" for="profile-pass2-input">Confirm password</label><input class="input" id="profile-pass2-input" type="password" placeholder="Repeat your new password"></div>
+                <div class="field-help">Leave password fields blank if you do not want to change the current password.</div>
                 <div class="field-group"><label class="field-label">Theme mode</label><div class="theme-toggle-row"><button class="ghost-btn" id="theme-light-btn" type="button">Light mode</button><button class="ghost-btn" id="theme-dark-btn" type="button">Dark mode</button></div></div>
                 <button class="btn-primary" id="save-user-btn" type="button">Save profile</button>
                 <div class="success-msg" id="user-save-msg">Profile updated locally.</div>
-                <div class="error-msg" id="user-save-err">Please provide a valid name, email, date of birth, and matching password.</div>
+                <div class="error-msg" id="user-save-err">Please provide a valid name, email, phone, date of birth, and matching password.</div>
               </div>
             </div>
             <div class="panel" style="margin-top:18px;">
@@ -769,14 +797,14 @@ input[type="range"] { width: 100%; accent-color: var(--gold2); }
             <div class="section-title-sm" style="margin-bottom:12px;">Send a message</div>
             <div class="field-group"><label class="field-label" for="contact-name">Your name</label><input class="input" id="contact-name" type="text" placeholder="Your name"></div>
             <div class="field-group"><label class="field-label" for="contact-email">Email</label><input class="input" id="contact-email" type="email" placeholder="you@example.com"></div>
-            <div class="field-group"><label class="field-label" for="contact-message">Message</label><textarea id="contact-message" placeholder="Tell us what you liked about the demo..."></textarea></div>
+            <div class="field-group"><label class="field-label" for="contact-message">Message</label><textarea id="contact-message" placeholder="Tell us what you liked about the app..."></textarea></div>
             <button class="btn-primary" id="contact-btn" type="button">Send message</button>
-            <div class="success-msg" id="contact-success">Message sent. Thanks for trying the demo.</div>
+            <div class="success-msg" id="contact-success">Message sent. Thanks for trying the app.</div>
             <div class="error-msg" id="contact-error">Please complete all fields before sending.</div>
           </div>
           <div>
             <div class="contact-card"><div class="section-title-sm">Email support</div><div style="margin-top:8px;color:var(--gold2);font-weight:700;">admin@cinematowatch.com</div><div class="muted" style="margin-top:4px;">Replies within 24 hours.</div></div>
-            <div class="contact-card"><div class="section-title-sm">Demo highlights</div><div class="muted" style="margin-top:8px;line-height:1.6;">State persistence, semantic recommendations, and responsive navigation are all bundled into a single deployable HTML experience.</div></div>
+            <div class="contact-card"><div class="section-title-sm">Product highlights</div><div class="muted" style="margin-top:8px;line-height:1.6;">State persistence, semantic recommendations, and responsive navigation are all bundled into a single deployable HTML experience.</div></div>
           </div>
         </div>
       </section>
@@ -1067,6 +1095,23 @@ function validateEmailField() {
   $('su-email-help').className = `field-help ${ok ? 'ok' : 'err'}`;
 }
 
+function isAdultDob(dobValue) {
+  if (!dobValue) return false;
+  const dob = new Date(dobValue);
+  if (Number.isNaN(dob.getTime())) return false;
+  const today = new Date();
+  if (dob > today) return false;
+  const age = today.getFullYear() - dob.getFullYear();
+  const monthDelta = today.getMonth() - dob.getMonth();
+  const dayDelta = today.getDate() - dob.getDate();
+  const adjustedAge = (monthDelta < 0 || (monthDelta === 0 && dayDelta < 0)) ? age - 1 : age;
+  return adjustedAge >= 13;
+}
+
+function isValidPhone(phoneValue) {
+  return /^\+?[0-9()\-\s]{7,20}$/.test(phoneValue);
+}
+
 function validatePasswordMatch() {
   const value = $('su-pass').value;
   const confirm = $('su-pass2').value;
@@ -1179,19 +1224,25 @@ function doSignup() {
   clearAlert('signup-alert');
   const name = $('su-name').value.trim();
   const email = $('su-email').value.trim().toLowerCase();
+  const dob = $('su-dob').value;
+  const phone = $('su-phone').value.trim();
   const password = $('su-pass').value;
   const confirm = $('su-pass2').value;
-  if (!name || !email || !password || !confirm) return showAlert('signup-alert', 'Please complete all fields.');
+  if (!name || !email || !dob || !phone || !password || !confirm) return showAlert('signup-alert', 'Please complete all fields.');
   if (name.length < 2) return showAlert('signup-alert', 'Name must be at least 2 characters.');
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return showAlert('signup-alert', 'Please enter a valid email address.');
+  if (!isAdultDob(dob)) return showAlert('signup-alert', 'Date of birth must be valid and at least age 13.');
+  if (!isValidPhone(phone)) return showAlert('signup-alert', 'Please enter a valid phone number.');
   if (password.length < 8) return showAlert('signup-alert', 'Password must be at least 8 characters.');
   if (password !== confirm) return showAlert('signup-alert', 'Passwords do not match.');
-  if (!$('terms').checked) return showAlert('signup-alert', 'Please accept the local-storage demo terms.');
+  if (!$('terms').checked) return showAlert('signup-alert', 'Please accept the local-storage terms.');
   if (store.accounts[email]) return showAlert('signup-alert', 'An account with this email already exists.');
 
   draftSignup = {
     name,
     email,
+    dob,
+    phone,
     password,
     dob: '',
     phone: '',
@@ -1236,7 +1287,7 @@ function completeSignup(skip = false) {
   store.accounts[account.email] = account;
   draftSignup = null;
   store.draftSignup = null;
-  enterApp({ name: account.name, email: account.email }, account);
+  enterApp({ name: account.name, email: account.email, dob: account.dob || '', phone: account.phone || '' }, account);
 }
 
 function getMovieById(movieId) {
@@ -1608,6 +1659,8 @@ function updateUserSurface() {
   $('profile-email-input').value = email;
   $('profile-dob-input').value = dob;
   $('profile-phone-input').value = phone;
+  $('profile-dob-display').textContent = dob || 'Not set';
+  $('profile-phone-display').textContent = phone || 'Not set';
   $('profile-pass-input').value = '';
   $('profile-pass2-input').value = '';
   $('profile-watched').textContent = String(state.watched.length);
@@ -1650,16 +1703,24 @@ function saveUserProfile() {
   const newPassword = $('profile-pass-input').value;
   const confirmPassword = $('profile-pass2-input').value;
   const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-  const dobOk = Boolean(dob);
+  const dobOk = isAdultDob(dob);
+  const phoneOk = isValidPhone(phone);
   const passwordProvided = newPassword.length > 0 || confirmPassword.length > 0;
   const passwordOk = !passwordProvided || (newPassword.length >= 8 && newPassword === confirmPassword);
-  if (name.length < 2 || !emailOk || !dobOk || !passwordOk) {
+  if (name.length < 2 || !emailOk || !dobOk || !phoneOk || !passwordOk) {
     $('user-save-err').style.display = 'block';
     $('user-save-msg').style.display = 'none';
     return;
   }
   $('user-save-err').style.display = 'none';
   const previousEmail = state.user?.email || email;
+  if (!state.user?.guest && previousEmail !== email && store.accounts[email]) {
+    $('user-save-err').style.display = 'block';
+    $('user-save-err').textContent = 'That email is already registered. Use another email.';
+    $('user-save-msg').style.display = 'none';
+    return;
+  }
+  $('user-save-err').textContent = 'Please provide a valid name, email, phone, date of birth, and matching password.';
   state.user = { ...(state.user || {}), name, email, dob, phone };
   if (!state.user.guest) {
     const previousAccount = store.accounts[previousEmail] || {};
@@ -1880,6 +1941,9 @@ function init() {
   showSplash();
   buildPosterWall();
   buildOtpInputs();
+  const today = new Date().toISOString().slice(0, 10);
+  $('su-dob').max = today;
+  $('profile-dob-input').max = today;
   bindEvents();
   bindTabs();
   setTheme(state.theme);
