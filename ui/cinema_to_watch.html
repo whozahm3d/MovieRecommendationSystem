@@ -78,7 +78,8 @@ a { color: inherit; }
 .splash-title { font-family: 'Bebas Neue', sans-serif; font-size: 32px; letter-spacing: 2px; }
 
 #auth-overlay {
-  position: fixed; inset: 0; z-index: 1000; display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(340px, 470px);
+  position: relative; min-height: 100vh; width: 100%; z-index: 1000;
+  display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(340px, 470px);
   background: var(--bg);
 }
 .auth-left {
@@ -115,7 +116,7 @@ body.light .feature-item { background: rgba(255,255,255,0.55); border-color: rgb
   background: linear-gradient(180deg, var(--bg2) 0%, var(--panel) 100%);
   border-left: 1px solid rgba(255,255,255,0.05);
   padding: 36px 42px 24px;
-  overflow-y: auto;
+  overflow: visible;
 }
 .auth-step { display: none; }
 .auth-step.active { display: block; animation: fade-up .25s ease; }
@@ -440,7 +441,7 @@ input[type="range"] { width: 100%; accent-color: var(--gold2); }
     <div class="poster-wall" id="poster-wall"></div>
     <div class="auth-left-content">
       <div class="hero-mark">Cinema to Watch</div>
-      <div class="auth-headline">A richer <span>movie demo</span><br>for your portfolio.</div>
+      <div class="auth-headline">A richer <span>movie app</span><br>for everyday use.</div>
       <p class="auth-copy">Explore a bundled TMDB snapshot, save your history locally, and try real browser-side similarity search with a responsive, shareable interface.</p>
       <div class="feature-list">
         <div class="feature-item"><span class="feature-dot"></span><span>120 bundled TMDB movies with real metadata and overviews.</span></div>
@@ -454,7 +455,7 @@ input[type="range"] { width: 100%; accent-color: var(--gold2); }
     <div id="step-auth" class="auth-step active">
       <div class="section-logo">Cinema to Watch</div>
       <div class="section-title">Sign in or create an account</div>
-      <p class="section-sub">Your preferences and activity will survive a browser refresh so evaluators can try the app like a real product.</p>
+      <p class="section-sub">Your preferences and activity survive refreshes so your account feels consistent like a real product.</p>
 
       <div class="auth-tabs">
         <button class="auth-tab active" data-auth-tab="login">Login</button>
@@ -545,7 +546,7 @@ input[type="range"] { width: 100%; accent-color: var(--gold2); }
       <button class="btn-secondary" id="interest-skip-btn" type="button">Skip for now</button>
     </div>
 
-    <div class="auth-footer">© 2026 Cinema to Watch · Responsive portfolio demo</div>
+    <div class="auth-footer">© 2026 Cinema to Watch · Responsive movie app</div>
   </aside>
 </div>
 
@@ -573,8 +574,8 @@ input[type="range"] { width: 100%; accent-color: var(--gold2); }
         <button class="nav-btn" data-page="contact">Contact</button>
       </div>
       <div class="sidebar-footer" id="tour-sidebar-footer">
-        <div class="user-name" id="sidebar-name">Portfolio Guest</div>
-        <div class="user-email" id="sidebar-email">demo@portfolio.local</div>
+        <div class="user-name" id="sidebar-name">Guest User</div>
+        <div class="user-email" id="sidebar-email">guest@cinematowatch.local</div>
         <div class="sidebar-actions">
           <button class="ghost-btn" id="signout-btn" type="button">Sign out</button>
         </div>
@@ -584,7 +585,7 @@ input[type="range"] { width: 100%; accent-color: var(--gold2); }
     <main class="main">
       <section id="page-home" class="page active">
         <div class="page-title">Home</div>
-        <p class="page-sub">A polished portfolio walkthrough with persisted state, mobile navigation, and a real bundled movie snapshot.</p>
+        <p class="page-sub">A polished movie experience with persisted state, mobile navigation, and a real bundled movie snapshot.</p>
 
         <div class="tour-card" id="tour-card">
           <strong>Guided app tour</strong>
@@ -721,8 +722,8 @@ input[type="range"] { width: 100%; accent-color: var(--gold2); }
           <div>
             <div class="panel">
               <div style="width:68px;height:68px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--gold2);color:#130f0a;font-weight:800;font-size:22px;margin:0 auto 12px;" id="profile-avatar">P</div>
-              <div style="text-align:center;font-family:'Bebas Neue',sans-serif;font-size:24px;letter-spacing:1px;" id="profile-name">Portfolio Guest</div>
-              <div class="muted" style="text-align:center;font-size:12px;margin-bottom:16px;" id="profile-email">demo@portfolio.local</div>
+              <div style="text-align:center;font-family:'Bebas Neue',sans-serif;font-size:24px;letter-spacing:1px;" id="profile-name">Guest User</div>
+              <div class="muted" style="text-align:center;font-size:12px;margin-bottom:16px;" id="profile-email">guest@cinematowatch.local</div>
               <div class="metric-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:0;">
                 <div class="metric-card"><div class="metric-value" id="profile-watched">0</div><div class="metric-label">Watched</div></div>
                 <div class="metric-card"><div class="metric-value" id="profile-activity">0</div><div class="metric-label">Activity</div></div>
@@ -731,13 +732,17 @@ input[type="range"] { width: 100%; accent-color: var(--gold2); }
             </div>
             <div class="panel" style="margin-top:18px;">
               <div class="section-title-sm" style="margin-bottom:12px;">User information</div>
-              <div class="profile-form">
+                <div class="profile-form">
                 <div class="field-group"><label class="field-label" for="profile-name-input">Full name</label><input class="input" id="profile-name-input" type="text" placeholder="Your full name"></div>
                 <div class="field-group"><label class="field-label" for="profile-email-input">Email</label><input class="input" id="profile-email-input" type="email" placeholder="you@example.com"></div>
+                <div class="field-group"><label class="field-label" for="profile-dob-input">Date of birth</label><input class="input" id="profile-dob-input" type="date"></div>
+                <div class="field-group"><label class="field-label" for="profile-phone-input">Phone number</label><input class="input" id="profile-phone-input" type="tel" placeholder="+1 555 123 4567"></div>
+                <div class="field-group"><label class="field-label" for="profile-pass-input">New password</label><input class="input" id="profile-pass-input" type="password" placeholder="Minimum 8 characters"></div>
+                <div class="field-group"><label class="field-label" for="profile-pass2-input">Confirm password</label><input class="input" id="profile-pass2-input" type="password" placeholder="Repeat your new password"></div>
                 <div class="field-group"><label class="field-label">Theme mode</label><div class="theme-toggle-row"><button class="ghost-btn" id="theme-light-btn" type="button">Light mode</button><button class="ghost-btn" id="theme-dark-btn" type="button">Dark mode</button></div></div>
                 <button class="btn-primary" id="save-user-btn" type="button">Save profile</button>
                 <div class="success-msg" id="user-save-msg">Profile updated locally.</div>
-                <div class="error-msg" id="user-save-err">Please enter a valid name and email.</div>
+                <div class="error-msg" id="user-save-err">Please provide a valid name, email, date of birth, and matching password.</div>
               </div>
             </div>
             <div class="panel" style="margin-top:18px;">
@@ -758,7 +763,7 @@ input[type="range"] { width: 100%; accent-color: var(--gold2); }
 
       <section id="page-contact" class="page">
         <div class="page-title">Contact</div>
-        <p class="page-sub">This remains a portfolio surface, but the interaction flow is polished with validation and clear states.</p>
+        <p class="page-sub">This page is production-oriented, with validation and clear user feedback states.</p>
         <div class="contact-grid">
           <div class="panel">
             <div class="section-title-sm" style="margin-bottom:12px;">Send a message</div>
@@ -1107,6 +1112,8 @@ function syncSessionToAccount() {
       name: state.user.name,
       email: state.user.email,
       password: store.accounts[state.user.email]?.password || '',
+      dob: state.user.dob || '',
+      phone: state.user.phone || '',
       interests: [...state.interests],
       watched: [...state.watched],
       activity: [...state.activity],
@@ -1154,7 +1161,7 @@ function signOut() {
 }
 
 function doGuestLogin() {
-  enterApp({ name: 'Portfolio Guest', email: 'demo@portfolio.local', guest: true }, store.session || {});
+  enterApp({ name: 'Guest User', email: 'guest@cinematowatch.local', guest: true, dob: '', phone: '' }, store.session || {});
 }
 
 function doLogin() {
@@ -1165,7 +1172,7 @@ function doLogin() {
   const account = store.accounts[email];
   if (!account) return showAlert('login-alert', 'Account not found. Create one or use the guest mode.');
   if (account.password !== password) return showAlert('login-alert', 'Incorrect password.');
-  enterApp({ name: account.name, email: account.email }, account);
+  enterApp({ name: account.name, email: account.email, dob: account.dob || '', phone: account.phone || '' }, account);
 }
 
 function doSignup() {
@@ -1186,6 +1193,8 @@ function doSignup() {
     name,
     email,
     password,
+    dob: '',
+    phone: '',
     code: String(Math.floor(100000 + Math.random() * 900000)),
   };
   store.draftSignup = draftSignup;
@@ -1218,6 +1227,8 @@ function completeSignup(skip = false) {
     name: draftSignup.name,
     email: draftSignup.email,
     password: draftSignup.password,
+    dob: draftSignup.dob || '',
+    phone: draftSignup.phone || '',
     interests: skip ? [] : [...selectedInterestDraft],
     watched: [],
     activity: [],
@@ -1584,8 +1595,10 @@ function renderRevenue() {
 }
 
 function updateUserSurface() {
-  const name = state.user?.name || 'Portfolio Guest';
-  const email = state.user?.email || 'demo@portfolio.local';
+  const name = state.user?.name || 'Guest User';
+  const email = state.user?.email || 'guest@cinematowatch.local';
+  const dob = state.user?.dob || '';
+  const phone = state.user?.phone || '';
   $('sidebar-name').textContent = name;
   $('sidebar-email').textContent = email;
   $('profile-name').textContent = name;
@@ -1593,6 +1606,10 @@ function updateUserSurface() {
   $('profile-avatar').textContent = name.split(' ').slice(0, 2).map((part) => part[0].toUpperCase()).join('');
   $('profile-name-input').value = name;
   $('profile-email-input').value = email;
+  $('profile-dob-input').value = dob;
+  $('profile-phone-input').value = phone;
+  $('profile-pass-input').value = '';
+  $('profile-pass2-input').value = '';
   $('profile-watched').textContent = String(state.watched.length);
   $('profile-activity').textContent = String(state.activity.length);
   $('profile-interests').textContent = String(state.interests.length);
@@ -1628,15 +1645,22 @@ function saveProfileInterests() {
 function saveUserProfile() {
   const name = $('profile-name-input').value.trim();
   const email = $('profile-email-input').value.trim().toLowerCase();
+  const dob = $('profile-dob-input').value;
+  const phone = $('profile-phone-input').value.trim();
+  const newPassword = $('profile-pass-input').value;
+  const confirmPassword = $('profile-pass2-input').value;
   const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-  if (name.length < 2 || !emailOk) {
+  const dobOk = Boolean(dob);
+  const passwordProvided = newPassword.length > 0 || confirmPassword.length > 0;
+  const passwordOk = !passwordProvided || (newPassword.length >= 8 && newPassword === confirmPassword);
+  if (name.length < 2 || !emailOk || !dobOk || !passwordOk) {
     $('user-save-err').style.display = 'block';
     $('user-save-msg').style.display = 'none';
     return;
   }
   $('user-save-err').style.display = 'none';
   const previousEmail = state.user?.email || email;
-  state.user = { ...(state.user || {}), name, email };
+  state.user = { ...(state.user || {}), name, email, dob, phone };
   if (!state.user.guest) {
     const previousAccount = store.accounts[previousEmail] || {};
     if (previousEmail !== email) delete store.accounts[previousEmail];
@@ -1644,7 +1668,9 @@ function saveUserProfile() {
       ...previousAccount,
       name,
       email,
-      password: previousAccount.password || '',
+      password: passwordProvided ? newPassword : (previousAccount.password || ''),
+      dob,
+      phone,
       interests: [...state.interests],
       watched: [...state.watched],
       activity: [...state.activity],
