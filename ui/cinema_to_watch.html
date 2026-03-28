@@ -759,7 +759,7 @@ input[type="range"] { width: 100%; accent-color: var(--gold2); }
             </div>
             <div class="panel" style="margin-top:18px;">
               <div class="section-title-sm" style="margin-bottom:12px;">User information</div>
-              <div class="profile-form">
+                <div class="profile-form">
                 <div class="field-group"><label class="field-label" for="profile-name-input">Full name</label><input class="input" id="profile-name-input" type="text" placeholder="Your full name"></div>
                 <div class="field-group"><label class="field-label" for="profile-email-input">Email</label><input class="input" id="profile-email-input" type="email" placeholder="you@example.com"></div>
                 <div class="field-group"><label class="field-label" for="profile-dob-input">Date of birth</label><input class="input" id="profile-dob-input" type="date"></div>
@@ -1244,6 +1244,8 @@ function doSignup() {
     dob,
     phone,
     password,
+    dob: '',
+    phone: '',
     code: String(Math.floor(100000 + Math.random() * 900000)),
   };
   store.draftSignup = draftSignup;
